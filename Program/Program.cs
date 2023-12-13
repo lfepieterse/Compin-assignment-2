@@ -88,9 +88,9 @@ namespace MyApp
 
             for (int blokCol = 0; blokCol < 3; blokCol++)
             {
-                for (int celRow = 0; celRow < 3; celRow++)
+                for (int celCol = 0; celCol < 3; celCol++)
                 {
-                    int WaardeUItHetVakje = grid[blokCol, BlockRowIndex].Cel[celRow, rowIndexInBlok].Getalwaarde;
+                    int WaardeUItHetVakje = grid[blokCol, BlockRowIndex].Cel[celCol, rowIndexInBlok].Getalwaarde;
                     Waarden.Add(WaardeUItHetVakje);
                 }
              }
