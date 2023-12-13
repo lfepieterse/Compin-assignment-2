@@ -2,43 +2,41 @@
 using System.Runtime.CompilerServices;
 
 //Evaluatie functie schrijven
-//Klasse blok maken
-//Klasse Nummer maken
-//INput inlezen
+//Klasse blok maken DONE
+//Klasse Nummer maken DONE
+//INput inlezen DONE
 
 namespace MyApp 
 {
 
-    internal class Blok 
+    internal class Blok //De klasse Blok: een blok is een 2D array van nummers!
     {
         public Nummer[,] Cel = new Nummer[3, 3];
-        // Implementeer methoden om met de cijfers in het blok te werken
     }
-    internal class Nummer
+    internal class Nummer //De klasse Nummer: een nummer heeft een Getalwaarde, en is Locked (indien ingevuld in de initiele sudoko of niet)
     {
         public int Getalwaarde { get; set; }
         public bool Locked { get; set; }
-        public Nummer(int Getal, bool JaOfNee) {
-
+        public Nummer(int Getal, bool JaOfNee) 
+        {
             Getalwaarde = Getal;
             Locked = JaOfNee;
-
     }
 }
     internal class Program
     {
-        private static Random random = new Random();
+        private static Random random = new Random(); //Maak een random object aan, handig voor later
         static void Main(string[] args)
         {
-            Console.WriteLine("Hoi, geef input in een reeks aan getallen!");
-            //Sudoko su = new Sudoko(string aan getallen)
-            string input = "003020600900305001001806400008102900700000008006708200002609500800203009005010300";
+            Console.WriteLine("Hoi, geef input in een reeks aan getallen!"); //Debug string
+            string input = "003020600900305001001806400008102900700000008006708200002609500800203009005010300"; //Moet nog ingelezen worden ipv dit
 
             //string input = Console.ReadLine(); //Ervan uitgaande dat er input is
 
             //-----BLOKKEN AANMAKEN en INVULLEN---
-            Blok[,] Grid = new Blok[3, 3];
+            Blok[,] Grid = new Blok[3, 3]; //Het grid is een 2D array van blokken
 
+            //Let bij het volgende stukje goed opde i*3, j*3. Dit is nodig om de juiste input uit de string in te lezen (zie Maakblok)
             for (int i = 0; i < 3; i++)
             {
                 for (int j = 0; j < 3; j++)
@@ -51,25 +49,21 @@ namespace MyApp
 
             //EVALUATIE LIJST AANMAKEN
 
-            int[] Totaleduplicatenwaardenlijst = new int[18];
-            int Teller = 0;
+            int[] Totaleduplicatenwaardenlijst = new int[18]; //Er zijn in totaal 18 rijen + kolommen
 
-            for (int rijindex = 0; rijindex<9;rijindex++) 
+            for (int rijindex = 0; rijindex<9;rijindex++) //Loop elke rij langs en evalueer deze
             {
-                Totaleduplicatenwaardenlijst[Teller] = EvalueerRij(Grid,rijindex);
-                Teller++;
+                Totaleduplicatenwaardenlijst[rijindex] = EvalueerRij(Grid,rijindex);
             }
 
-            for (int kolomindex = 0; kolomindex<9;kolomindex++) //Kolomindex + 9 = lijstindex
+            for (int kolomindex = 0; kolomindex<9;kolomindex++) //Kolomindex + 9 = lijstindex. Hier lopen we alle kolomen langs
             {
-                Totaleduplicatenwaardenlijst[Teller] = EvalueerKolom(Grid,kolomindex);
-                
-                Teller++;
+                Totaleduplicatenwaardenlijst[kolomindex + 9] = EvalueerKolom(Grid,kolomindex); //+ 9, omdat de 2e helft vd lijst voor de kolommen is
             }
 
             //EVALUATIE LIJST AANGEMAAKT!!
 
-            //NU: pak blok, ga alle getallen swappen en check
+            //NU: pak blok, ga alle getallen swappen en check de ev waarde
             
             string Yeehaw = Console.ReadLine(); //random line for fun en voor debuggging
 
@@ -81,7 +75,7 @@ namespace MyApp
         static int EvalueerRij(Blok[,] grid, int rijIndex)
         {
             List<int> Waarden = new List<int>();
-            int duplicaten = 0;
+            int duplicaten;
             int BlockRowIndex;
             //Nu willen we een lijst maken van alle getallen in de verschillende blokken, in dezelfde kolommen
             
