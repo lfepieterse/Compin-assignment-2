@@ -34,8 +34,8 @@ namespace MyApp
 	internal class Program
 	{
 		private static Random random = new Random(); //Maak een random object aan, handig voor later
-		private const int MAX_ITERATIONS = 3000;
-		private const int S = 100;
+		private const int MAX_ITERATIONS = 1000;
+		private const int S = 50;
 		static void Main(string[] args)
 		{
 			Console.WriteLine("Hoi, geef input in een reeks aan getallen!"); //Debug string
@@ -100,41 +100,49 @@ namespace MyApp
 
 		static void ApplyILS(Blok[,] grid, int randomBlockRow, int randomBlockCol)
 		{
-			int bestScore = EvaluateSolution(grid); //kijken hoeveel waardes er missen in het geheel van de 18 rijen en kolommen in het begin
+			int bestScore = EvaluateSolution(grid); // opslaan hoeveel getallen er voor alle rijen en kolommen missen na initialisatie in totaal
 
-			for (int step = 0; step < S; step++)
+			//Met het aantal ingestelde stappen (S) gaan we alle niet vastgezetten waarden in het blok wisselen en evalueren
+			for (int stap = 0; stap < S; stap++) 
 			{
-				int row1 = random.Next(3);
-				int col1 = random.Next(3);
-				int row2 = random.Next(3);
-				int col2 = random.Next(3);
+				for (int row1 = 0; row1 < 3; row1++)
+				{
+					for (int col1 = 0; col1 < 3; col1++)
+					{
+						if (!grid[randomBlockRow, randomBlockCol].Cel[row1, col1].Locked)
+						{
+							for (int row2 = 0; row2 < 3; row2++)
+							{
+								for (int col2 = 0; col2 < 3; col2++)
+								{
+									if (!grid[randomBlockRow, randomBlockCol].Cel[row2, col2].Locked &&
+										!(row1 == row2 && col1 == col2))
+									{
+										// waardes omwisselen
+										grid[randomBlockRow, randomBlockCol].SwapDigits(row1, col1, row2, col2);
 
-				while (grid[randomBlockRow, randomBlockCol].Cel[row1, col1].Locked) //zorgen dat er geen vastgezet nummer geswapt wordt
-				{
-					row1 = random.Next(3);
-					col1 = random.Next(3);
-				}
-				while (grid[randomBlockRow, randomBlockCol].Cel[row2, col2].Locked) 
-				{
-					row2 = random.Next(3);
-					col2 = random.Next(3);
-				}
+										// Kijken hoeveel getallen er nu missen in totaal
+										int currentScore = EvaluateSolution(grid);
 
-				grid[randomBlockRow, randomBlockCol].SwapDigits(row1, col1, row2, col2);
-				
-				// we berekenen of er minder (of evenveel) waardes missen in het gehele grid, anders switchen we de waardes weer terug
-				int currentScore = EvaluateSolution(grid); 
-				
-				if (currentScore <= bestScore)
-				{
-					bestScore = currentScore;
-				}
-				else
-				{
-					grid[randomBlockRow, randomBlockCol].SwapDigits(row1, col1, row2, col2);
+										// Als minder of evenveel getallen dan eerst missen is dit de nieuwe bestscore
+										if (currentScore <= bestScore)
+										{
+											bestScore = currentScore;
+										}
+										else
+										{
+											// Als het niet beter of gelijk is, worden de waardes weer teruggewisseld
+											grid[randomBlockRow, randomBlockCol].SwapDigits(row1, col1, row2, col2);
+										}
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 		}
+
 
 		static void PrintGrid(Blok[,] grid) // we gaan alle rijen en kolommen af als de sudoku is opgelost, om de oplossing te printen
 		{
