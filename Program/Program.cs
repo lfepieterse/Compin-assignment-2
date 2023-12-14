@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 
 //Evaluatie functie schrijven
@@ -35,13 +35,13 @@ namespace MyApp
 	{
 		private static Random random = new Random(); //Maak een random object aan, handig voor later
 		private const int iteraties = 1500;
-		private const int S = 50;
+		private const int S = 50; //stappen aantal!
 		static void Main(string[] args)
 		{
 			Console.WriteLine("Hoi, geef input in een reeks aan getallen!"); //Debug string
 			//string input = "003020600900305001001806400008102900700000008006708200002609500800203009005010300"; //Moet nog ingelezen worden ipv dit
 
-			string lezen = Console.ReadLine(); //Ervan uitgaande dat er input is
+			string lezen = Console.ReadLine(); //Ervan uitgaande dat er input is, met spaties
 			string input = string.Join("", lezen.Split(' '));
 
 			//-----BLOKKEN AANMAKEN en INVULLEN---
@@ -180,7 +180,7 @@ namespace MyApp
 			// dit doen we ook in de kolommen
 			for (int colIndex = 0; colIndex < 9; colIndex++)
 			{
-				totalMissing += EvalueerKolom(grid, colIndex);
+				totalMissing += EvalueerKolom(grid, colIndex); //Hoe dit toch wel + 9 zijn?
 			}
 
 			return totalMissing;
@@ -222,8 +222,10 @@ namespace MyApp
 			//Nu willen we een lijst maken van alle getallen in de verschillende blokken, in dezelfde kolommen
 
 			//BlockColIndex bepalen: op welke kolom (vd blokken, dus 1e, 2e of 3e) moeten wij gaan zoeken?
-			if (Kolomindex < 3 + 9) { BlockColIndex = 0; }
-			else if (Kolomindex < 6 + 9) { BlockColIndex = 1; }
+
+            //EERST STOND HIER OVERAL 3+9, 6+9, maar dit moet gwn 3,6,9 zijn enzo!
+			if (Kolomindex < 3) { BlockColIndex = 0; }
+			else if (Kolomindex < 6) { BlockColIndex = 1; }
 			else { BlockColIndex = 2; }
 
 			int ColIndexInBlok = Kolomindex % 3; //Welke rij in het blok we moeten zoeken is onze eerdere index % 3.
