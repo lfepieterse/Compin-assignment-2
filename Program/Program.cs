@@ -13,7 +13,7 @@ namespace MyApp
 	{
 		public Nummer[,] Cel = new Nummer[3, 3];
 
-		public void SwapDigits(int row1, int col1, int row2, int col2) //twee waardes in cellen van de grid worden hier omgewisseld
+		public void Wissel(int row1, int col1, int row2, int col2) //twee waardes in cellen van de grid worden hier omgewisseld
 		{
 			
 			Nummer temp = Cel[row1, col1];
@@ -34,14 +34,15 @@ namespace MyApp
 	internal class Program
 	{
 		private static Random random = new Random(); //Maak een random object aan, handig voor later
-		private const int MAX_ITERATIONS = 1000;
+		private const int iteraties = 1500;
 		private const int S = 50;
 		static void Main(string[] args)
 		{
 			Console.WriteLine("Hoi, geef input in een reeks aan getallen!"); //Debug string
-			string input = "003020600900305001001806400008102900700000008006708200002609500800203009005010300"; //Moet nog ingelezen worden ipv dit
+			//string input = "003020600900305001001806400008102900700000008006708200002609500800203009005010300"; //Moet nog ingelezen worden ipv dit
 
-			//string input = Console.ReadLine(); //Ervan uitgaande dat er input is
+			string lezen = Console.ReadLine(); //Ervan uitgaande dat er input is
+			string input = string.Join("", lezen.Split(' '));
 
 			//-----BLOKKEN AANMAKEN en INVULLEN---
 			Blok[,] Grid = new Blok[3, 3]; //Het grid is een 2D array van blokken
@@ -82,12 +83,12 @@ namespace MyApp
 
 
 
-			for (int iteration = 0; iteration < MAX_ITERATIONS; iteration++)
+			for (int iteration = 0; iteration < iteraties; iteration++)
 			{
 				int randomBlockRow = random.Next(3); // genereert een random getal tussen 0, 1 en 2
 				int randomBlockCol = random.Next(3);
 
-				ApplyILS(Grid, randomBlockRow, randomBlockCol);
+				ILS(Grid, randomBlockRow, randomBlockCol);
 
 			}
 
@@ -98,9 +99,9 @@ namespace MyApp
 
 		}
 
-		static void ApplyILS(Blok[,] grid, int randomBlockRow, int randomBlockCol)
+		static void ILS(Blok[,] grid, int randomBlockRow, int randomBlockCol)
 		{
-			int bestScore = EvaluateSolution(grid); // opslaan hoeveel getallen er voor alle rijen en kolommen missen na initialisatie in totaal
+			int bestScore = Evalueer(grid); // opslaan hoeveel getallen er voor alle rijen en kolommen missen na initialisatie in totaal
 
 			//Met het aantal ingestelde stappen (S) gaan we alle niet vastgezetten waarden in het blok wisselen en evalueren
 			for (int stap = 0; stap < S; stap++) 
@@ -119,12 +120,13 @@ namespace MyApp
 										!(row1 == row2 && col1 == col2))
 									{
 										// waardes omwisselen
-										grid[randomBlockRow, randomBlockCol].SwapDigits(row1, col1, row2, col2);
+										grid[randomBlockRow, randomBlockCol].Wissel(row1, col1, row2, col2);
 
 										// Kijken hoeveel getallen er nu missen in totaal
-										int currentScore = EvaluateSolution(grid);
+										int currentScore = Evalueer(grid);
 
 										// Als minder of evenveel getallen dan eerst missen is dit de nieuwe bestscore
+										// Dit is ook wel het (local search /) hill climbing gedeelte
 										if (currentScore <= bestScore)
 										{
 											bestScore = currentScore;
@@ -132,7 +134,7 @@ namespace MyApp
 										else
 										{
 											// Als het niet beter of gelijk is, worden de waardes weer teruggewisseld
-											grid[randomBlockRow, randomBlockCol].SwapDigits(row1, col1, row2, col2);
+											grid[randomBlockRow, randomBlockCol].Wissel(row1, col1, row2, col2);
 										}
 									}
 								}
@@ -144,7 +146,7 @@ namespace MyApp
 		}
 
 
-		static void PrintGrid(Blok[,] grid) // we gaan alle rijen en kolommen af als de sudoku is opgelost, om de oplossing te printen
+		static void PrintGrid(Blok[,] grid) // we gaan alle rijen en kolommen af als de sudoku is opgelost, om de oplossing te printen in een goede vorm
 		{
 			for (int i = 0; i < 3; i++)
 			{	
@@ -165,7 +167,7 @@ namespace MyApp
 			Console.WriteLine();
 		}
 
-		static int EvaluateSolution(Blok[,] grid)
+		static int Evalueer(Blok[,] grid) //kijk naar het aantal totale getallen die missen in de hele grid voor alle rijen + kolommen
 		{
 			int totalMissing = 0; //initialiseer waarde voor het aantal getallen dat mist in de grid
 
