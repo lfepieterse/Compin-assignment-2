@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 
 //Evaluatie functie schrijven
@@ -15,7 +15,7 @@ namespace MyApp
 
 		public void Wissel(int row1, int col1, int row2, int col2) //twee waardes in cellen van de grid worden hier omgewisseld
 		{
-			
+
 			Nummer temp = Cel[row1, col1];
 			Cel[row1, col1] = Cel[row2, col2];
 			Cel[row2, col2] = temp;
@@ -36,10 +36,11 @@ namespace MyApp
 		private static Random random = new Random(); //Maak een random object aan, handig voor later
 		private const int iteraties = 1500;
 		private const int S = 50; //stappen aantal!
+		private const int zitvast = 10; //als de heuristiek niet beter wordt na ....  iteraties
 		static void Main(string[] args)
 		{
 			Console.WriteLine("Hoi, geef input in een reeks aan getallen!"); //Debug string
-			//string input = "003020600900305001001806400008102900700000008006708200002609500800203009005010300"; //Moet nog ingelezen worden ipv dit
+																			 //string input = "003020600900305001001806400008102900700000008006708200002609500800203009005010300"; //Moet nog ingelezen worden ipv dit
 
 			string lezen = Console.ReadLine(); //Ervan uitgaande dat er input is, met spaties
 			string input = string.Join("", lezen.Split(' '));
@@ -82,8 +83,8 @@ namespace MyApp
 			//berekenen.
 
 
-
-			for (int iteration = 0; iteration < iteraties; iteration++)
+			// Hier kiezen we (het aantal keer van de iteraties een random blok uit om local search mee te doen
+			for (int iteration = 0; iteration < iteraties; iteration++) 
 			{
 				int randomBlockRow = random.Next(3); // genereert een random getal tussen 0, 1 en 2
 				int randomBlockCol = random.Next(3);
@@ -103,55 +104,63 @@ namespace MyApp
 		{
 			int bestScore = Evalueer(grid); // opslaan hoeveel getallen er voor alle rijen en kolommen missen na initialisatie in totaal
 
-			//Met het aantal ingestelde stappen (S) gaan we alle niet vastgezetten waarden in het blok wisselen en evalueren
-			for (int stap = 0; stap < S; stap++) 
+			List<Tuple<int, int, int, int, int>> bestSwaps = new List<Tuple<int, int, int, int, int>>(); // Lijst voor het bijhouden van de beste swaps
+
+			// Met het aantal ingestelde stappen (S) gaan we alle niet vastgezetten waarden in het blok wisselen en evalueren
+			
+			for (int row1 = 0; row1 < 3; row1++)
 			{
-				for (int row1 = 0; row1 < 3; row1++)
+				for (int col1 = 0; col1 < 3; col1++)
 				{
-					for (int col1 = 0; col1 < 3; col1++)
+					if (!grid[randomBlockRow, randomBlockCol].Cel[row1, col1].Locked)
 					{
-						if (!grid[randomBlockRow, randomBlockCol].Cel[row1, col1].Locked)
+						for (int row2 = 0; row2 < 3; row2++)
 						{
-							for (int row2 = 0; row2 < 3; row2++)
+							for (int col2 = 0; col2 < 3; col2++)
 							{
-								for (int col2 = 0; col2 < 3; col2++)
+								if (!grid[randomBlockRow, randomBlockCol].Cel[row2, col2].Locked &&
+									!(row1 == row2 && col1 == col2))
 								{
-									if (!grid[randomBlockRow, randomBlockCol].Cel[row2, col2].Locked &&
-										!(row1 == row2 && col1 == col2))
+									// waardes omwisselen
+									grid[randomBlockRow, randomBlockCol].Wissel(row1, col1, row2, col2);
+
+									// Kijken hoeveel getallen er nu missen in totaal
+									int currentScore = Evalueer(grid);
+
+									// Als minder of evenveel getallen dan eerst missen is dit de nieuwe bestscore
+									if (currentScore <= bestScore)
 									{
-										// waardes omwisselen
-										grid[randomBlockRow, randomBlockCol].Wissel(row1, col1, row2, col2);
-
-										// Kijken hoeveel getallen er nu missen in totaal
-										int currentScore = Evalueer(grid);
-
-										// Als minder of evenveel getallen dan eerst missen is dit de nieuwe bestscore
-										// Dit is ook wel het (local search /) hill climbing gedeelte
-										if (currentScore <= bestScore)
-										{
-											bestScore = currentScore;
-										}
-										else
-										{
-											// Als het niet beter of gelijk is, worden de waardes weer teruggewisseld
-											grid[randomBlockRow, randomBlockCol].Wissel(row1, col1, row2, col2);
-										}
+										bestScore = currentScore;
+										bestSwaps.Add(new Tuple<int, int, int, int, int>(row1, col1, row2, col2, currentScore));
 									}
+
+									// De waardes weer teruggewisseld
+									grid[randomBlockRow, randomBlockCol].Wissel(row1, col1, row2, col2);
 								}
 							}
 						}
 					}
 				}
 			}
+		
+
+			// Kies de beste swap
+			if (bestSwaps.Count > 0)
+			{
+				Tuple<int, int, int, int, int> bestSwap = bestSwaps.OrderBy(t => t.Item5).First();
+				grid[randomBlockRow, randomBlockCol].Wissel(bestSwap.Item1, bestSwap.Item2, bestSwap.Item3, bestSwap.Item4);
+			}
 		}
+
+
 
 
 		static void PrintGrid(Blok[,] grid) // we gaan alle rijen en kolommen af als de sudoku is opgelost, om de oplossing te printen in een goede vorm
 		{
 			for (int i = 0; i < 3; i++)
-			{	
+			{
 				for (int row = 0; row < 3; row++)
-				{ 
+				{
 					for (int j = 0; j < 3; j++)
 					{
 						for (int col = 0; col < 3; col++)
@@ -223,7 +232,7 @@ namespace MyApp
 
 			//BlockColIndex bepalen: op welke kolom (vd blokken, dus 1e, 2e of 3e) moeten wij gaan zoeken?
 
-            //EERST STOND HIER OVERAL 3+9, 6+9, maar dit moet gwn 3,6,9 zijn enzo!
+			//EERST STOND HIER OVERAL 3+9, 6+9, maar dit moet gwn 3,6,9 zijn enzo!
 			if (Kolomindex < 3) { BlockColIndex = 0; }
 			else if (Kolomindex < 6) { BlockColIndex = 1; }
 			else { BlockColIndex = 2; }
@@ -240,7 +249,7 @@ namespace MyApp
 			}
 
 			// Bepaal het aantal duplicaten in de lijst
-			nietvoorkomend = 9 - Waarden.Distinct().Count(); 
+			nietvoorkomend = 9 - Waarden.Distinct().Count();
 			return nietvoorkomend;
 		}
 
