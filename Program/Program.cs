@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
-//Evaluatie functie schrijven
-//Klasse blok maken DONE
-//Klasse Nummer maken DONE
-//INput inlezen DONE
 
 namespace MyApp
 {
@@ -34,16 +31,18 @@ namespace MyApp
 	internal class Program
 	{
 		private static Random random = new Random(); //Maak een random object aan, handig voor later
-		private const int iteraties = 100000;
-		private const int HoeVaakRandomWalkJeDoet = 5; //stappen aantal!
-		private const int zitvast = 15; //als de heuristiek niet beter wordt na ....  iteraties
+		private const int iteraties = 100000; //Een aantal iteraties voor ILS
+		private const int HoeVaakRandomWalkJeDoet = 3; //Hoeveel je randomwalkt!
+		private const int zitvast = 15; //Na zoveel iteraties zonder verbetering, ga je randomwalken
 		static void Main(string[] args)
 		{
 			Console.WriteLine("Hoi, geef input in een reeks aan getallen!"); //Debug string
-			string input = "003020600900305001001806400008102900700000008006708200002609500800203009005010300"; //Moet nog ingelezen worden ipv dit
 
-			// string lezen = Console.ReadLine(); //Ervan uitgaande dat er input is, met spaties
-			// string input = string.Join("", lezen.Split(' '));
+			string lezen = Console.ReadLine(); //Ervan uitgaande dat er input is, met spaties
+			string input = string.Join("", lezen.Split(' ')); //Zet het om naar een leesbare string!
+			
+			Stopwatch stopwatch = new Stopwatch(); //We gebruiken een stopwatch om de tijd te meten!
+			stopwatch.Start();
 
 			//-----BLOKKEN AANMAKEN en INVULLEN---
 			Blok[,] Grid = new Blok[3, 3]; //Het grid is een 2D array van blokken
@@ -61,6 +60,9 @@ namespace MyApp
 
 			//EVALUATIE LIJST AANMAKEN
 
+			//De Heuristiekelijst is een lijst van 18 entries met (9rijen en 9 kolommen) waarin wordt bijgehouden per rij en kolom hoeveel items dubbel staan.
+			//In plaats van het hele grid te evalueren, hoeven we vaak slechts 2 rijen en kolommen te evalueren, en dit aan te passen in de lijst!
+
 			int[] HeuristiekeLijst = new int[18]; //Er zijn in totaal 18 rijen + kolommen
 
 			for (int rijindex = 0; rijindex < 9; rijindex++) //Loop elke rij langs en evalueer deze
@@ -75,64 +77,62 @@ namespace MyApp
 
 			//EVALUATIE LIJST AANGEMAAKT!!
 
-			//NU: pak blok, ga alle getallen swappen en check de ev waarde
-
-			//string Yeehaw = Console.ReadLine(); //random line for fun en voor debuggging
-
-			//NU willen we een heuristieke functie maken, die aan de hand van een totaal grid en rij en kolom aanduiding de heur waarde kan 
-			//berekenen.
 			int ZitVastTeller = 0;
 
 			// Hier kiezen we (het aantal keer van de iteraties een random blok uit om local search mee te doen
-			for (int iteration = 0; iteration < iteraties; iteration++) 
+			for (int iteration = 0; iteration < iteraties; iteration++)
 			{
-				int randomBlockRow = random.Next(3); // genereert een random getal tussen 0, 1 en 2
+				int randomBlockRow = random.Next(3); //Pak een random blok van je sudoku
 				int randomBlockCol = random.Next(3);
 
-				int SomVoorILS = HeuristiekeLijst.Sum();
+				int SomVoorILS = HeuristiekeLijst.Sum(); //Bereken de totale heurisiteke waarde van het Grid vóór ILS
 
-				ILS(Grid, randomBlockRow, randomBlockCol, HeuristiekeLijst);
+				ILS(Grid, randomBlockRow, randomBlockCol, HeuristiekeLijst); //zie ILS definitie
 
-				int SomNaILS = HeuristiekeLijst.Sum();
+				int SomNaILS = HeuristiekeLijst.Sum(); //En bereken de waarde ook erna.
+
 
 				if (SomNaILS ==0) {
 					break; //Dan is ie klaar!
 				}
 
 				else if (SomVoorILS == SomNaILS) {
-					ZitVastTeller++;
+					ZitVastTeller++; //Als er geen verbetering is, laat je de 'ik zit vast'-teller oplopen
 					
-					if (ZitVastTeller == zitvast) {
-					RandomWalk(Grid,HoeVaakRandomWalkJeDoet, HeuristiekeLijst);
-					ZitVastTeller = 0;
+					if (ZitVastTeller == zitvast) //indien de teller een threshold heeft bereikt, ga je randomwalken!
+					{
+					RandomWalk(Grid,HoeVaakRandomWalkJeDoet, HeuristiekeLijst); //Randomwalk
+					ZitVastTeller = 0; //En reset de teller weer
 					}
 				}
 
-				else if (SomVoorILS != SomNaILS) {
+				else if (SomVoorILS != SomNaILS) //Indien er wel een aanpassing is gemaakt, reset de teller weer.
+				{
 					ZitVastTeller = 0;
 				}
 
 			}
+			stopwatch.Stop(); //STOP DE TIJD!
 
-			// Display or use the best solution obtained by ILS.
 			Console.WriteLine("Best Solution:");
 			PrintGrid(Grid);
-			System.Console.WriteLine("Heuristiekewaarde: " + HeuristiekeLijst.Sum());
+			Console.WriteLine("Heuristiekewaarde: " + HeuristiekeLijst.Sum());
+			System.Console.WriteLine("Time elapsed: " + stopwatch.Elapsed); //Print de tijd!
 			//EN DISPLAY TIJD YWWHAW
 		}
 
-        static void RandomWalk(Blok[,] grid, int HoeVaakRandomWalkJeDoet,int [] HeuristiekeLijst)
+        static void RandomWalk(Blok[,] grid, int HoeVaakRandomWalkJeDoet, int [] HeuristiekeLijst) //De randomwalk functie!
         {
             for (int i = 0; i < HoeVaakRandomWalkJeDoet; i++) {
-				int randomBlockRow = random.Next(3); // genereert een random getal tussen 0, 1 en 2
+				int randomBlockRow = random.Next(3); //Randomblok
 				int randomBlockCol = random.Next(3);
 
-				//if (!grid[randomBlockRow, randomBlockCol].Cel[row1, col1].Locked)
-				int randomrow1= random.Next(3);
+				int randomrow1= random.Next(3); //2 random cellen
 				int randomrow2 = random.Next(3);
 				int randomcol1 = random.Next(3);
 				int randomcol2 = random.Next(3);
 
+				//Deze cellen mogen natuurlijk niet locked zijn, dus dat checken we even
 				while (grid[randomBlockRow, randomBlockCol].Cel[randomrow1, randomcol1].Locked) {
 					randomrow1= random.Next(3);
 					randomcol1 = random.Next(3);
@@ -146,27 +146,27 @@ namespace MyApp
 				//Nu hebben 2 losse cellen, laten we ze swappen!
 				grid[randomBlockRow, randomBlockCol].Wissel(randomrow1, randomcol1, randomrow2, randomcol2);
 
-				int Rijdindex1 = randomrow1 + 3*randomBlockRow;
+				//En nu gaan we opnieuw de heuristiek berkenen en dit aanpassen.
+				int Rijdindex1 = randomrow1 + 3*randomBlockRow; //Dit is de rekenkundige manier om de random row om te zetten naar een getal tussen de 0 en 18.
 				int Rijdindex2 = randomrow2 + 3* randomBlockRow;
 				int ColomIndex1 = randomcol1 + 3*randomBlockCol;
 				int ColomIndex2 = randomcol2 + 3*randomBlockCol;
 
-				HeuristiekeLijst[Rijdindex1] = EvalueerRij(grid, Rijdindex1);
+				HeuristiekeLijst[Rijdindex1] = EvalueerRij(grid, Rijdindex1); //Evalueer de Rij! En kolom ofcourse.
 				HeuristiekeLijst[Rijdindex2] = EvalueerRij(grid, Rijdindex2);
 				HeuristiekeLijst[ColomIndex1+9] = EvalueerKolom(grid, ColomIndex1);
 				HeuristiekeLijst[ColomIndex2+9] = EvalueerKolom(grid, ColomIndex2);	
 			}
         }
 
-        static void ILS(Blok[,] grid, int randomBlockRow, int randomBlockCol, int[] HeuristiekeLijst)
+        static void ILS(Blok[,] grid, int randomBlockRow, int randomBlockCol, int[] HeuristiekeLijst) //Het HART van dit programma
 		{
 			int bestScore = HeuristiekeLijst.Sum(); // opslaan hoeveel getallen er voor alle rijen en kolommen missen na initialisatie in totaal
 
 			List<Tuple<int, int, int, int, int>> bestSwaps = new List<Tuple<int, int, int, int, int>>(); // Lijst voor het bijhouden van de beste swaps
 
-			// Met het aantal ingestelde stappen (S) gaan we alle niet vastgezetten waarden in het blok wisselen en evalueren
 			
-			for (int row1 = 0; row1 < 3; row1++)
+			for (int row1 = 0; row1 < 3; row1++) //Ga alle mogelijke swaps langs
 			{
 				for (int col1 = 0; col1 < 3; col1++)
 				{
@@ -192,10 +192,10 @@ namespace MyApp
 									int ColomIndex1 = col1 + 3*randomBlockCol;
 									int ColomIndex2 = col2 + 3*randomBlockCol;
 
-									CopyHeurLijst[Rijdindex1] = EvalueerRij(grid, Rijdindex1);
+									CopyHeurLijst[Rijdindex1] = EvalueerRij(grid, Rijdindex1); //Evalueer de aangepaste rijen en kolommen!
 									CopyHeurLijst[Rijdindex2] = EvalueerRij(grid, Rijdindex2);
-									CopyHeurLijst[ColomIndex1+9] = EvalueerKolom(grid, Rijdindex1);
-									CopyHeurLijst[ColomIndex1+9] = EvalueerKolom(grid, Rijdindex2);
+									CopyHeurLijst[ColomIndex1+9] = EvalueerKolom(grid, ColomIndex1);
+									CopyHeurLijst[ColomIndex2+9] = EvalueerKolom(grid, ColomIndex2);
 
 									int currentScore = CopyHeurLijst.Sum();
 
@@ -229,7 +229,7 @@ namespace MyApp
 				HeuristiekeLijst[Rijdindex1] = EvalueerRij(grid, Rijdindex1);
 				HeuristiekeLijst[Rijdindex2] = EvalueerRij(grid, Rijdindex2);
 				HeuristiekeLijst[ColomIndex1+9] = EvalueerKolom(grid, ColomIndex1);
-				HeuristiekeLijst[ColomIndex1+9] = EvalueerKolom(grid, ColomIndex2);
+				HeuristiekeLijst[ColomIndex2+9] = EvalueerKolom(grid, ColomIndex2);
 			}
 		}
 
@@ -257,24 +257,6 @@ namespace MyApp
 			Console.WriteLine();
 		}
 
-		static int Evalueer(Blok[,] grid) //kijk naar het aantal totale getallen die missen in de hele grid voor alle rijen + kolommen
-		{
-			int totalMissing = 0; //initialiseer waarde voor het aantal getallen dat mist in de grid
-
-			// we gaan voor alle rijen optellen hoeveel waardes er missen
-			for (int rowIndex = 0; rowIndex < 9; rowIndex++)
-			{
-				totalMissing += EvalueerRij(grid, rowIndex);
-			}
-
-			// dit doen we ook in de kolommen
-			for (int colIndex = 0; colIndex < 9; colIndex++)
-			{
-				totalMissing += EvalueerKolom(grid, colIndex); //Hoe dit toch wel + 9 zijn?
-			}
-
-			return totalMissing;
-		}
 
 		static int EvalueerRij(Blok[,] grid, int rijIndex)
 		{
@@ -294,12 +276,11 @@ namespace MyApp
 			{
 				for (int celCol = 0; celCol < 3; celCol++)
 				{
-					int WaardeUItHetVakje = grid[blokCol, BlockRowIndex].Cel[celCol, rowIndexInBlok].Getalwaarde;
+					int WaardeUItHetVakje = grid[BlockRowIndex, blokCol].Cel[rowIndexInBlok, celCol].Getalwaarde;
 					Waarden.Add(WaardeUItHetVakje);
 				}
 			}
-			/* System.Console.WriteLine(Waarden.Count()); */
-
+			
 			// Bepaal het aantal duplicaten in de lijst
 			nietvoorkomend = 9 - Waarden.Distinct().Count(); // kijken naar hoeveel van de 9 waarden niet in de rij voorkomen (ipv duplicaten)
 			return nietvoorkomend;
@@ -307,13 +288,12 @@ namespace MyApp
 		static int EvalueerKolom(Blok[,] grid, int Kolomindex)
 		{
 			List<int> Waarden = new List<int>();
-			int nietvoorkomend = 0;
+			int nietvoorkomend;
 			int BlockColIndex;
 			//Nu willen we een lijst maken van alle getallen in de verschillende blokken, in dezelfde kolommen
 
 			//BlockColIndex bepalen: op welke kolom (vd blokken, dus 1e, 2e of 3e) moeten wij gaan zoeken?
 
-			//EERST STOND HIER OVERAL 3+9, 6+9, maar dit moet gwn 3,6,9 zijn enzo!
 			if (Kolomindex < 3) { BlockColIndex = 0; }
 			else if (Kolomindex < 6) { BlockColIndex = 1; }
 			else { BlockColIndex = 2; }
@@ -324,7 +304,7 @@ namespace MyApp
 			{
 				for (int celRow = 0; celRow < 3; celRow++)
 				{
-					int WaardeUItHetVakje = grid[BlockColIndex, blokRow].Cel[ColIndexInBlok, celRow].Getalwaarde;
+					int WaardeUItHetVakje = grid[blokRow, BlockColIndex].Cel[celRow, ColIndexInBlok].Getalwaarde;
 					Waarden.Add(WaardeUItHetVakje);
 				}
 			}
@@ -371,7 +351,7 @@ namespace MyApp
 				}
 			}
 		}
-		static Blok MaakBlok(string input, int startRow, int startCol)
+		static Blok MaakBlok(string input, int startRow, int startCol) //Deze code vult adhv van een input string de blokken in!
 		{
 
 			Blok blok = new Blok();
