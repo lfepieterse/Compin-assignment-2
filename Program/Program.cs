@@ -31,12 +31,12 @@ namespace MyApp
 	internal class Program
 	{
 		private static Random random = new Random(); //Maak een random object aan, handig voor later
-		private const int iteraties = 100000; //Een aantal iteraties voor ILS
+		private const int iteraties = 300000; //Een aantal iteraties voor ILS
 		private const int HoeVaakRandomWalkJeDoet = 3; //Hoeveel je randomwalkt!
 		private const int zitvast = 15; //Na zoveel iteraties zonder verbetering, ga je randomwalken
 
-		//static List<int> LijstZitVastWaarden = new List<int>() { 1000, 100, 50, 15 }; //Lijsten voor onderzoek doen!
-		//static List<int> LijstAantalStappen = new List<int>() {50,15,3 ,1};
+		//static List<int> LijstZitVastWaarden = new List<int>() {5,10,15,20,25,30,35,40,45,50}; //Lijsten voor onderzoek doen!
+		//static List<int> LijstAantalStappen = new List<int>() {3}; //oud: 50,15,3,1
 
 		
 		
@@ -50,14 +50,13 @@ namespace MyApp
 			
 			Stopwatch stopwatch = new Stopwatch(); //We gebruiken een stopwatch om de tijd te meten!
 			
-			//for (int i = 0; i < LijstZitVastWaarden.Count(); i++) //2 forloops om onderzoek te doen! 
-			//{
-				//for (int j = 0; j < LijstAantalStappen.Count;j++) 
-				// {
-				// 	int zitvast = LijstZitVastWaarden[i];
-				// 	int HoeVaakRandomWalkJeDoet = LijstAantalStappen[j];
+			// for (int i = 0; i < LijstZitVastWaarden.Count(); i++) //2 forloops om onderzoek te doen! 
+			// {
+			// 	for (int j = 0; j < LijstAantalStappen.Count;j++) 
+			// 	{
+			// 		int zitvast = LijstZitVastWaarden[i];
+			// 		int HoeVaakRandomWalkJeDoet = LijstAantalStappen[j];
 				
-			
 
 					stopwatch.Restart();
 
@@ -131,16 +130,15 @@ namespace MyApp
 					}
 					stopwatch.Stop(); //STOP DE TIJD!
 					System.Console.WriteLine("----------------------------------");
-					//Console.WriteLine("Best Solution:");
-					//PrintGrid(Grid);
+					Console.WriteLine("Best Solution:");
+					PrintGrid(Grid);
 					Console.WriteLine("Heuristiekewaarde: " + HeuristiekeLijst.Sum());
-					System.Console.WriteLine("Time elapsed: " + stopwatch.Elapsed); //Print de tijd!
+					System.Console.WriteLine(stopwatch.Elapsed.ToString()); //Print de tijd!
 					System.Console.WriteLine("Zitvast: " + zitvast);
 					System.Console.WriteLine("Hoeveel stappen je random walkt: " + HoeVaakRandomWalkJeDoet);
-					//EN DISPLAY TIJD YWWHAW
 				}
-		//	}
-		//}
+		// 	}
+		// }
 
         static void RandomWalk(Blok[,] grid, int HoeVaakRandomWalkJeDoet, int [] HeuristiekeLijst) //De randomwalk functie!
         {
