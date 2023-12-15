@@ -34,6 +34,13 @@ namespace MyApp
 		private const int iteraties = 100000; //Een aantal iteraties voor ILS
 		private const int HoeVaakRandomWalkJeDoet = 3; //Hoeveel je randomwalkt!
 		private const int zitvast = 15; //Na zoveel iteraties zonder verbetering, ga je randomwalken
+
+		//static List<int> LijstZitVastWaarden = new List<int>() { 1000, 100, 50, 15 }; //Lijsten voor onderzoek doen!
+		//static List<int> LijstAantalStappen = new List<int>() {50,15,3 ,1};
+
+		
+		
+
 		static void Main(string[] args)
 		{
 			Console.WriteLine("Hoi, geef input in een reeks aan getallen!"); //Debug string
@@ -42,84 +49,98 @@ namespace MyApp
 			string input = string.Join("", lezen.Split(' ')); //Zet het om naar een leesbare string!
 			
 			Stopwatch stopwatch = new Stopwatch(); //We gebruiken een stopwatch om de tijd te meten!
-			stopwatch.Start();
+			
+			//for (int i = 0; i < LijstZitVastWaarden.Count(); i++) //2 forloops om onderzoek te doen! 
+			//{
+				//for (int j = 0; j < LijstAantalStappen.Count;j++) 
+				// {
+				// 	int zitvast = LijstZitVastWaarden[i];
+				// 	int HoeVaakRandomWalkJeDoet = LijstAantalStappen[j];
+				
+			
 
-			//-----BLOKKEN AANMAKEN en INVULLEN---
-			Blok[,] Grid = new Blok[3, 3]; //Het grid is een 2D array van blokken
+					stopwatch.Restart();
 
-			//Let bij het volgende stukje goed opde i*3, j*3. Dit is nodig om de juiste input uit de string in te lezen (zie Maakblok)
-			for (int i = 0; i < 3; i++)
-			{
-				for (int j = 0; j < 3; j++)
-				{
-					Grid[i, j] = MaakBlok(input, i * 3, j * 3); //Hiermee maken we de blokken aan.
-					BlokInVuller(Grid[i, j]); //En zo vullen we het blok meteen in!
-				}
-			}
-			// KLAAR MET BLOKKEN AANMAKEN EN INVULLEN
+					//-----BLOKKEN AANMAKEN en INVULLEN---
+					Blok[,] Grid = new Blok[3, 3]; //Het grid is een 2D array van blokken
 
-			//EVALUATIE LIJST AANMAKEN
-
-			//De Heuristiekelijst is een lijst van 18 entries met (9rijen en 9 kolommen) waarin wordt bijgehouden per rij en kolom hoeveel items dubbel staan.
-			//In plaats van het hele grid te evalueren, hoeven we vaak slechts 2 rijen en kolommen te evalueren, en dit aan te passen in de lijst!
-
-			int[] HeuristiekeLijst = new int[18]; //Er zijn in totaal 18 rijen + kolommen
-
-			for (int rijindex = 0; rijindex < 9; rijindex++) //Loop elke rij langs en evalueer deze
-			{
-				HeuristiekeLijst[rijindex] = EvalueerRij(Grid, rijindex);
-			}
-
-			for (int kolomindex = 0; kolomindex < 9; kolomindex++) //Kolomindex + 9 = lijstindex. Hier lopen we alle kolomen langs
-			{
-				HeuristiekeLijst[kolomindex + 9] = EvalueerKolom(Grid, kolomindex); //+ 9, omdat de 2e helft vd lijst voor de kolommen is
-			} 
-
-			//EVALUATIE LIJST AANGEMAAKT!!
-
-			int ZitVastTeller = 0;
-
-			// Hier kiezen we (het aantal keer van de iteraties een random blok uit om local search mee te doen
-			for (int iteration = 0; iteration < iteraties; iteration++)
-			{
-				int randomBlockRow = random.Next(3); //Pak een random blok van je sudoku
-				int randomBlockCol = random.Next(3);
-
-				int SomVoorILS = HeuristiekeLijst.Sum(); //Bereken de totale heurisiteke waarde van het Grid vóór ILS
-
-				ILS(Grid, randomBlockRow, randomBlockCol, HeuristiekeLijst); //zie ILS definitie
-
-				int SomNaILS = HeuristiekeLijst.Sum(); //En bereken de waarde ook erna.
-
-
-				if (SomNaILS ==0) {
-					break; //Dan is ie klaar!
-				}
-
-				else if (SomVoorILS == SomNaILS) {
-					ZitVastTeller++; //Als er geen verbetering is, laat je de 'ik zit vast'-teller oplopen
-					
-					if (ZitVastTeller == zitvast) //indien de teller een threshold heeft bereikt, ga je randomwalken!
+					//Let bij het volgende stukje goed opde i*3, j*3. Dit is nodig om de juiste input uit de string in te lezen (zie Maakblok)
+					for (int x = 0; x < 3; x++)
 					{
-					RandomWalk(Grid,HoeVaakRandomWalkJeDoet, HeuristiekeLijst); //Randomwalk
-					ZitVastTeller = 0; //En reset de teller weer
+						for (int y = 0; y < 3; y++)
+						{
+							Grid[x, y] = MaakBlok(input, x * 3, y * 3); //Hiermee maken we de blokken aan.
+							BlokInVuller(Grid[x, y]); //En zo vullen we het blok meteen in!
+						}
 					}
+					// KLAAR MET BLOKKEN AANMAKEN EN INVULLEN
+
+					//EVALUATIE LIJST AANMAKEN
+
+					//De Heuristiekelijst is een lijst van 18 entries met (9rijen en 9 kolommen) waarin wordt bijgehouden per rij en kolom hoeveel items dubbel staan.
+					//In plaats van het hele grid te evalueren, hoeven we vaak slechts 2 rijen en kolommen te evalueren, en dit aan te passen in de lijst!
+
+					int[] HeuristiekeLijst = new int[18]; //Er zijn in totaal 18 rijen + kolommen
+
+					for (int rijindex = 0; rijindex < 9; rijindex++) //Loop elke rij langs en evalueer deze
+					{
+						HeuristiekeLijst[rijindex] = EvalueerRij(Grid, rijindex);
+					}
+
+					for (int kolomindex = 0; kolomindex < 9; kolomindex++) //Kolomindex + 9 = lijstindex. Hier lopen we alle kolomen langs
+					{
+						HeuristiekeLijst[kolomindex + 9] = EvalueerKolom(Grid, kolomindex); //+ 9, omdat de 2e helft vd lijst voor de kolommen is
+					} 
+
+					//EVALUATIE LIJST AANGEMAAKT!!
+
+					int ZitVastTeller = 0;
+
+					// Hier kiezen we (het aantal keer van de iteraties een random blok uit om local search mee te doen
+					for (int iteration = 0; iteration < iteraties; iteration++)
+					{
+						int randomBlockRow = random.Next(3); //Pak een random blok van je sudoku
+						int randomBlockCol = random.Next(3);
+
+						int SomVoorILS = HeuristiekeLijst.Sum(); //Bereken de totale heurisiteke waarde van het Grid vóór ILS
+
+						ILS(Grid, randomBlockRow, randomBlockCol, HeuristiekeLijst); //zie ILS definitie
+
+						int SomNaILS = HeuristiekeLijst.Sum(); //En bereken de waarde ook erna.
+
+
+						if (SomNaILS ==0) {
+							break; //Dan is ie klaar!
+						}
+
+						else if (SomVoorILS == SomNaILS) {
+							ZitVastTeller++; //Als er geen verbetering is, laat je de 'ik zit vast'-teller oplopen
+							
+							if (ZitVastTeller == zitvast) //indien de teller een threshold heeft bereikt, ga je randomwalken!
+							{
+							RandomWalk(Grid,HoeVaakRandomWalkJeDoet, HeuristiekeLijst); //Randomwalk
+							ZitVastTeller = 0; //En reset de teller weer
+							}
+						}
+
+						else if (SomVoorILS != SomNaILS) //Indien er wel een aanpassing is gemaakt, reset de teller weer.
+						{
+							ZitVastTeller = 0;
+						}
+
+					}
+					stopwatch.Stop(); //STOP DE TIJD!
+					System.Console.WriteLine("----------------------------------");
+					//Console.WriteLine("Best Solution:");
+					//PrintGrid(Grid);
+					Console.WriteLine("Heuristiekewaarde: " + HeuristiekeLijst.Sum());
+					System.Console.WriteLine("Time elapsed: " + stopwatch.Elapsed); //Print de tijd!
+					System.Console.WriteLine("Zitvast: " + zitvast);
+					System.Console.WriteLine("Hoeveel stappen je random walkt: " + HoeVaakRandomWalkJeDoet);
+					//EN DISPLAY TIJD YWWHAW
 				}
-
-				else if (SomVoorILS != SomNaILS) //Indien er wel een aanpassing is gemaakt, reset de teller weer.
-				{
-					ZitVastTeller = 0;
-				}
-
-			}
-			stopwatch.Stop(); //STOP DE TIJD!
-
-			Console.WriteLine("Best Solution:");
-			PrintGrid(Grid);
-			Console.WriteLine("Heuristiekewaarde: " + HeuristiekeLijst.Sum());
-			System.Console.WriteLine("Time elapsed: " + stopwatch.Elapsed); //Print de tijd!
-			//EN DISPLAY TIJD YWWHAW
-		}
+		//	}
+		//}
 
         static void RandomWalk(Blok[,] grid, int HoeVaakRandomWalkJeDoet, int [] HeuristiekeLijst) //De randomwalk functie!
         {
