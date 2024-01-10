@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Comp Int\\Assignment 1\\Computationele-Intelligentie\\Program\\Program.csproj": {}
+    "C:\\Comp Int\\Assignment 2\\Compin-assignment-2\\Program\\Program.csproj": {}
   },
   "projects": {
-    "C:\\Comp Int\\Assignment 1\\Computationele-Intelligentie\\Program\\Program.csproj": {
+    "C:\\Comp Int\\Assignment 2\\Compin-assignment-2\\Program\\Program.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Comp Int\\Assignment 1\\Computationele-Intelligentie\\Program\\Program.csproj",
+        "projectUniqueName": "C:\\Comp Int\\Assignment 2\\Compin-assignment-2\\Program\\Program.csproj",
         "projectName": "Program",
-        "projectPath": "C:\\Comp Int\\Assignment 1\\Computationele-Intelligentie\\Program\\Program.csproj",
+        "projectPath": "C:\\Comp Int\\Assignment 2\\Compin-assignment-2\\Program\\Program.csproj",
         "packagesPath": "C:\\Users\\Robva\\.nuget\\packages\\",
-        "outputPath": "C:\\Comp Int\\Assignment 1\\Computationele-Intelligentie\\Program\\obj\\",
+        "outputPath": "C:\\Comp Int\\Assignment 2\\Compin-assignment-2\\Program\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Robva\\AppData\\Roaming\\NuGet\\NuGet.Config",
