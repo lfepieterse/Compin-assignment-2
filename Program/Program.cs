@@ -60,7 +60,7 @@ namespace MyApp
 				}
 			}
 
-			//Nu lijsten aanmaken van rijen, van kollomen en van blokken.
+			//Nu lijsten aanmaken van rijen, van kollomen, en de mogelijkheden per cel!
 			List<List<int>> rijenLijst = MaakRijenLijst(Sudoku);
 			List<List<int>> kolommenLijst = MaakKolommenLijst(Sudoku);
 			List<Stack<int>> MogelijkHedenPerCel = MaakMogelijkHedenPerCel(Sudoku);
@@ -72,48 +72,51 @@ namespace MyApp
 			{
 				//Als de stack waarvan we de mogelijkheid willen checken leeg is, moet deze waarde van dit item op 9 worden gezet, 
 				//de stack worden aangevuld en de cursor een stap terug. We moeten wel voorkomen dat we terug gaan, bij een locked aankomen, en daardoor weer vooruitgaan!
+				//Daarom heb ik een bool anagemaakt die checkt of we 'naar achter' bewegen. Zo ja, en we komen bij een locked cel aan, gaan we nog een stapje achteruit!
+				//Console.WriteLine(Cursor);
 
-
-				int yCoordinaat = Cursor / 9; //Van Cursor naar coodinaat.
+				int yCoordinaat = Cursor / 9; //Van Cursor naar coodinaat. Rekentrucje om van een getal tussen 0 en 80 naar de coordinaat in de 2D array te gaan
 				int xCoordinaat = Cursor % 9;
 
 				//Op moment dat de mogelijkheden lijst empty is, hervullen we de stack, zetten we de waarde op 0 en gaat de cursor eentje achteruit!
-				if (MogelijkHedenPerCel[Cursor].Count == 0) //TODO EY DE ERROR DIE IK KRIJG IS ALS DE CURSOR -1 WORDT
+				if (MogelijkHedenPerCel[Cursor].Count == 0)
 				{
-					MogelijkHedenPerCel[Cursor] = HerVulStack();
-					Sudoku[yCoordinaat, xCoordinaat].Getalwaarde = 0;
-					Cursor--;
+					MogelijkHedenPerCel[Cursor] = HerVulStack(); //We hervullen de stack
+					Sudoku[yCoordinaat, xCoordinaat].Getalwaarde = 0; //Zetten de waarde weer op 0
+					UpdateRijen(rijenLijst, Sudoku, yCoordinaat); //Updaten de rijen en kolommen
+					UpdateKolommen(kolommenLijst, Sudoku, xCoordinaat);
+					Cursor--; //En zetten de cursor een tikkie achteruit
 					ZittenWeInDeAchteruit = true; //We gaan nu terug, dus we zitten in de achteruit!
-					continue;
+												  //System.Console.WriteLine("Stack is leeg, en nu weer gevuld!");
+
+					continue; //Continue betekent: ga naar de volgende iteratie van de while loop en skip wat hieronder staat.
 				}
 
-				if (Sudoku[yCoordinaat, xCoordinaat].Locked)
+				if (Sudoku[yCoordinaat, xCoordinaat].Locked) //Als hij locked is...
 				{
 					if (ZittenWeInDeAchteruit) { Cursor--; } //Als we in de achteruitzitten en we komen aan bij een locked cel, moeten we nog eentje naar achteren!
 					else { Cursor++; } //Anders gaan we gewoon weer door naar de volgende cel
-
+									   //System.Console.WriteLine("Locked!");
 					continue;
 
 				}
 
 				ZittenWeInDeAchteruit = false; //We zetten em weer op default waarde
-
-				//We gaan eerst het geval schrijven dat alles klopt!
-
-				Sudoku[yCoordinaat, xCoordinaat].Getalwaarde = MogelijkHedenPerCel[Cursor].Peek(); //Pak de bovenste van de stack!
+				Sudoku[yCoordinaat, xCoordinaat].Getalwaarde = MogelijkHedenPerCel[Cursor].Pop(); //Pak de bovenste van de stack!
 
 				//Als de waarde al in de Rij, Blok, Of kolom staat, moeten we naar de volgende!
 				if (StaatMijnWaardeAlInDeRij(rijenLijst, yCoordinaat, Sudoku[yCoordinaat, xCoordinaat].Getalwaarde) ||
 				StaatMijnWaardeAlInHetBlok(Sudoku, yCoordinaat, xCoordinaat) ||
-				StaatMijnWaardeAlInDeKolom(kolommenLijst, xCoordinaat, Sudoku[yCoordinaat, xCoordinaat].Getalwaarde))
+				StaatMijnWaardeAlInDeKolom(kolommenLijst, xCoordinaat, Sudoku[yCoordinaat, xCoordinaat].Getalwaarde)) // || betekent 'or'. Als een vd gevallen waar is, kijken we naar het volgende item op de stack.
 				{
-					MogelijkHedenPerCel[Cursor].Pop();
-					continue;
-					//En nu gaan we eigenlijk het hele proces opnieuw doen, alleen dat met een verminderde stack!				
+					//System.Console.WriteLine($"Ik probeer {Sudoku[yCoordinaat, xCoordinaat].Getalwaarde}, maar er is een dubbele. Rij = {StaatMijnWaardeAlInDeRij(rijenLijst, yCoordinaat, Sudoku[yCoordinaat, xCoordinaat].Getalwaarde)}. Kolom = {StaatMijnWaardeAlInDeKolom(kolommenLijst, xCoordinaat, Sudoku[yCoordinaat, xCoordinaat].Getalwaarde)}. Blok = {StaatMijnWaardeAlInHetBlok(Sudoku, yCoordinaat, xCoordinaat)}");
+					continue; //En nu gaan we eigenlijk het hele proces opnieuw doen, alleen dat met een verminderde stack!	
+
 				}
 
 				else //Op moment dat het wél klopt, aldus het getal correct is ingevuld en met niks stramt... 
 				{
+					//System.Console.WriteLine($"Dit ging goed, ik heb {Sudoku[yCoordinaat, xCoordinaat].Getalwaarde} ingevuld en ga de rijen en kolommen updaten!");
 					//Update de rijen en kolommen lijst. (blokken is geen lijst van en hoeft niet upgedate te worden)
 					UpdateRijen(rijenLijst, Sudoku, yCoordinaat);
 					UpdateKolommen(kolommenLijst, Sudoku, xCoordinaat);
@@ -122,44 +125,47 @@ namespace MyApp
 					Cursor++;
 					ZittenWeInDeAchteruit = false;
 				}
+
 			}
 
 			//Als hij hier uitkomt is hij klaar!
 
-
-
-			// //-----BLOKKEN AANMAKEN en INVULLEN---
-			// Blok[,] Grid = new Blok[3, 3]; //Het grid is een 2D array van blokken
-
-			// //Let bij het volgende stukje goed opde i*3, j*3. Dit is nodig om de juiste input uit de string in te lezen (zie Maakblok)
-			// for (int x = 0; x < 3; x++)
-			// {
-			// 	for (int y = 0; y < 3; y++)
-			// 	{
-			// 		Grid[x, y] = MaakBlok(input, x * 3, y * 3); //Hiermee maken we de blokken aan.
-			// 		//BlokInVuller(Grid[x, y]); //En zo vullen we het blok meteen in!
-			// 	}
-			// }
-			// // KLAAR MET BLOKKEN AANMAKEN EN INVULLEN
-
 			stopwatch.Stop(); //STOP DE TIJD!
 			System.Console.WriteLine("----------------------------------");
 			Console.WriteLine("Best Solution:");
-			//PrintGrid(Grid);
-			//Console.WriteLine("Heuristiekewaarde: " + HeuristiekeLijst.Sum());
+			PrintSudoku(Sudoku);
 			System.Console.WriteLine(stopwatch.Elapsed.ToString()); //Print de tijd!
-																	//System.Console.WriteLine("Zitvast: " + zitvast);
-																	//System.Console.WriteLine("Hoeveel stappen je random walkt: " + HoeVaakRandomWalkJeDoet);
 		}
-		// 	}
-		// }
-		static void UpdateRijen(List<List<int>> rijenLijst, Nummer[,] sudoku, int rijIndex)
+
+		static void PrintSudoku(Nummer[,] sudoku) //Alleen voor debug printen, van gpt
+		{
+			for (int i = 0; i < 9; i++)
+			{
+				if (i % 3 == 0 && i > 0)
+				{
+					Console.WriteLine("------+-------+------");
+				}
+
+				for (int j = 0; j < 9; j++)
+				{
+					if (j % 3 == 0 && j > 0)
+					{
+						Console.Write("| ");
+					}
+
+					Console.Write(sudoku[i, j].Getalwaarde == 0 ? " " : sudoku[i, j].Getalwaarde.ToString());
+					Console.Write(" ");
+				}
+				Console.WriteLine();
+			}
+		}
+		static void UpdateRijen(List<List<int>> rijenLijst, Nummer[,] sudoku, int rijIndex) //Functie om de rijenlijst te updaten
 		{
 			// Lees de rij uit de sudoku in
-			List<int> nieuweRij = new List<int>();
+			List<int> nieuweRij = new List<int>(); //Maak een nieuwe lijst
 			for (int j = 0; j < 9; j++)
 			{
-				nieuweRij.Add(sudoku[rijIndex, j].Getalwaarde);
+				nieuweRij.Add(sudoku[rijIndex, j].Getalwaarde); //Vul em met alle relevante waarden (dus op één rij in de sudoku)
 			}
 
 			// Update de rijenLijst met de nieuwe rij
@@ -177,7 +183,7 @@ namespace MyApp
 			return nieuweStack;
 		}
 
-		static void UpdateKolommen(List<List<int>> kolommenLijst, Nummer[,] sudoku, int kolomIndex)
+		static void UpdateKolommen(List<List<int>> kolommenLijst, Nummer[,] sudoku, int kolomIndex) //Gelijk aan UpdateRijen
 		{
 			// Lees de kolom uit de sudoku in
 			List<int> nieuweKolom = new List<int>();
@@ -189,19 +195,19 @@ namespace MyApp
 			// Update de kolommenLijst met de nieuwe kolom
 			kolommenLijst[kolomIndex] = nieuweKolom;
 		}
-		static bool StaatMijnWaardeAlInDeRij(List<List<int>> rijenLijst, int rijIndex, int waarde)
+		static bool StaatMijnWaardeAlInDeRij(List<List<int>> rijenLijst, int rijIndex, int waarde) //Checkker of de waarde al in de rij staat!
 		{
 			List<int> rij = rijenLijst[rijIndex];
 			return rij.Contains(waarde);
 		}
 
-		static bool StaatMijnWaardeAlInDeKolom(List<List<int>> kolommenlijst, int kolomindex, int waarde)
+		static bool StaatMijnWaardeAlInDeKolom(List<List<int>> kolommenlijst, int kolomindex, int waarde) //Idem aan De Rij variant
 		{
 			List<int> kolom = kolommenlijst[kolomindex];
 			return kolom.Contains(waarde);
 		}
 
-		static List<Stack<int>> MaakMogelijkHedenPerCel(Nummer[,] sudoku)
+		static List<Stack<int>> MaakMogelijkHedenPerCel(Nummer[,] sudoku) //Functie die stacks aan maakt met de mogelijkheden per cel.
 		{
 			List<Stack<int>> mogelijkhedenStacks = new List<Stack<int>>(); //We gaan een lijst aan stacks maken
 
@@ -231,19 +237,19 @@ namespace MyApp
 			return mogelijkhedenStacks;
 		}
 
-		static bool StaatMijnWaardeAlInHetBlok(Nummer[,] sudoku, int row, int col)
+		static bool StaatMijnWaardeAlInHetBlok(Nummer[,] sudoku, int rij, int kolom) //Checker of de waarde al in het blok staat
 		{
-			int blokYCoordinaat = row / 3;  // Bereken het blokcoordinaat voor de rij (door de int hoef je niet te flooren)
-			int blokXCoordinaat = col / 3;  // Bereken het blokcoordinaat voor de kolom
+			int blokYCoordinaat = rij / 3;  // Bereken het blokcoordinaat voor de rij (door de int hoef je niet te flooren)
+			int blokXCoordinaat = kolom / 3;  // Bereken het blokcoordinaat voor de kolom
 
 			for (int y = blokYCoordinaat * 3; y < 3 + blokYCoordinaat * 3; y++) //We gaan alle cellen in het blok doorlopen
 			{
 				for (int x = blokXCoordinaat * 3; x < 3 + blokXCoordinaat * 3; x++)
 				{
 					// Controleer of de waarde al in het blok zit, behalve de cel waarin we net hebben veranderd
-					if (y != row || x != col)
+					if (y != rij || x != kolom)
 					{
-						if (sudoku[y, x].Getalwaarde == sudoku[row, col].Getalwaarde) //Het getal dat je invult kan nooit een nul zijn, dus daar hoef je geen eexception voor te schrijven
+						if (sudoku[y, x].Getalwaarde == sudoku[rij, kolom].Getalwaarde) //Het getal dat je invult kan nooit een nul zijn, dus daar hoef je geen eexception voor te schrijven
 						{
 							return true;  // De waarde zit al in het blok
 						}
@@ -254,11 +260,7 @@ namespace MyApp
 			return false;  // De waarde zit nog niet in het blok
 		}
 
-		static bool StaatMijnWaardeAlInDeRij(List<int> rij, int waarde)
-		{
-			return rij.Contains(waarde);
-		}
-		static List<List<int>> MaakRijenLijst(Nummer[,] sudoku)
+		static List<List<int>> MaakRijenLijst(Nummer[,] sudoku) //Functie om adhv een gehele sudoku een rijenlijst aan te maken.
 		{
 			List<List<int>> rijenLijst = new List<List<int>>(); //Lijst aanmaken
 
@@ -275,7 +277,7 @@ namespace MyApp
 			return rijenLijst;
 		}
 
-		static List<List<int>> MaakKolommenLijst(Nummer[,] sudoku)
+		static List<List<int>> MaakKolommenLijst(Nummer[,] sudoku) //Idem aan de Rij variant
 		{
 			List<List<int>> kolommenLijst = new List<List<int>>(); //Lijst aanmaken
 
@@ -290,106 +292,6 @@ namespace MyApp
 			}
 
 			return kolommenLijst;
-		}
-
-
-		static void PrintGrid(Blok[,] grid) // we gaan alle rijen en kolommen af als de sudoku is opgelost, om de oplossing te printen in een goede vorm
-		{
-			for (int i = 0; i < 3; i++)
-			{
-				for (int row = 0; row < 3; row++)
-				{
-					for (int j = 0; j < 3; j++)
-					{
-						for (int col = 0; col < 3; col++)
-						{
-							Console.Write(grid[i, j].Cel[row, col].Getalwaarde + " ");
-						}
-						Console.Write("  ");
-					}
-					Console.WriteLine();
-				}
-				Console.WriteLine();
-			}
-			Console.WriteLine();
-		}
-
-
-		static int EvalueerRij(Blok[,] grid, int rijIndex) //aan te passen
-		{
-			List<int> Waarden = new List<int>();
-			int nietvoorkomend;
-			int BlockRowIndex;
-			//Nu willen we een lijst maken van alle getallen in de verschillende blokken, in dezelfde kolommen
-
-			//BlockRowIndex bepalen: op welke rij (vd blokken, dus 1e, 2e of 3e) moeten wij gaan zoeken?
-			if (rijIndex < 3) { BlockRowIndex = 0; }
-			else if (rijIndex < 6) { BlockRowIndex = 1; }
-			else { BlockRowIndex = 2; }
-
-			int rowIndexInBlok = rijIndex % 3; //Welke rij in het blok we moeten zoeken is onze eerdere index % 3.
-
-			for (int blokCol = 0; blokCol < 3; blokCol++)
-			{
-				for (int celCol = 0; celCol < 3; celCol++)
-				{
-					int WaardeUItHetVakje = grid[BlockRowIndex, blokCol].Cel[rowIndexInBlok, celCol].Getalwaarde;
-					Waarden.Add(WaardeUItHetVakje);
-				}
-			}
-
-			// Bepaal het aantal duplicaten in de lijst
-			nietvoorkomend = 9 - Waarden.Distinct().Count(); // kijken naar hoeveel van de 9 waarden niet in de rij voorkomen (ipv duplicaten)
-			return nietvoorkomend;
-		}
-		static int EvalueerKolom(Blok[,] grid, int Kolomindex) //aan te passen
-		{
-			List<int> Waarden = new List<int>();
-			int nietvoorkomend;
-			int BlockColIndex;
-			//Nu willen we een lijst maken van alle getallen in de verschillende blokken, in dezelfde kolommen
-
-			//BlockColIndex bepalen: op welke kolom (vd blokken, dus 1e, 2e of 3e) moeten wij gaan zoeken?
-
-			if (Kolomindex < 3) { BlockColIndex = 0; }
-			else if (Kolomindex < 6) { BlockColIndex = 1; }
-			else { BlockColIndex = 2; }
-
-			int ColIndexInBlok = Kolomindex % 3; //Welke rij in het blok we moeten zoeken is onze eerdere index % 3.
-
-			for (int blokRow = 0; blokRow < 3; blokRow++)
-			{
-				for (int celRow = 0; celRow < 3; celRow++)
-				{
-					int WaardeUItHetVakje = grid[blokRow, BlockColIndex].Cel[celRow, ColIndexInBlok].Getalwaarde;
-					Waarden.Add(WaardeUItHetVakje);
-				}
-			}
-
-			// Bepaal het aantal duplicaten in de lijst
-			nietvoorkomend = 9 - Waarden.Distinct().Count();
-			return nietvoorkomend;
-		}
-
-
-		static Blok MaakBlok(string input, int startRow, int startCol) //Deze code vult adhv van een input string de blokken in!
-		{
-
-			Blok blok = new Blok();
-
-			for (int i = 0; i < 3; i++)
-			{
-				for (int j = 0; j < 3; j++)
-				{
-					int index = (startRow + i) * 9 + (startCol + j);
-					int getal = int.Parse(input[index].ToString());
-					bool vergrendeld = getal != 0; //Geeft bool aan of hij vergendeld is of niet
-
-					blok.Cel[i, j] = new Nummer(getal, vergrendeld);
-				}
-			}
-
-			return blok;
 		}
 	}
 }
