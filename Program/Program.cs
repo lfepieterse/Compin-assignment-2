@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using System.ComponentModel;
@@ -183,6 +183,10 @@ namespace MyApp
 				List<List<int>> kolommenLijst = MaakKolommenLijst(Sudoku);
 				List<Stack<int>> OrgineleMogelijkHedenPerCel = MaakMogelijkHedenPerCel2(Sudoku, rijenLijst, kolommenLijst);
 				List<Stack<int>> UpToDateMogelijkHedenPerCel = new List<Stack<int>>(OrgineleMogelijkHedenPerCel);
+				List<List<Stack<int>>> Geschiedenis = new List<List<Stack<int>>>();
+
+				Geschiedenis.Add(OrgineleMogelijkHedenPerCel); //We maken een volledige geschiedenis aan!
+
 
 				int Cursor = 0; //We beginnen met de cursor op puntje bij de 1e item uit de sudoku.
 				bool ZittenWeInDeAchteruit = false; //Bool om bij te houden of we terug aan het gaan zijn!
@@ -194,22 +198,21 @@ namespace MyApp
 					//Daarom heb ik een bool anagemaakt die checkt of we 'naar achter' bewegen. Zo ja, en we komen bij een locked cel aan, gaan we nog een stapje achteruit!
 					//Console.WriteLine(Cursor);
 
+					UpToDateMogelijkHedenPerCel = Geschiedenis.Last(); //We pakken de meest recente, dat is de up to date mogelijkheden.
+
 					int yCoordinaat = Cursor / 9; //Van Cursor naar coodinaat. Rekentrucje om van een getal tussen 0 en 80 naar de coordinaat in de 2D array te gaan
 					int xCoordinaat = Cursor % 9;
 
 					//Op moment dat de mogelijkheden lijst empty is, hervullen we de stack, zetten we de waarde op 0 en gaat de cursor eentje achteruit!
-					// if (MogelijkHedenPerCel2[Cursor].Count == 0)
-					// {
-					// 	MogelijkHedenPerCel[Cursor] = HerVulStack(); //We hervullen de stack
-					// 	Sudoku[yCoordinaat, xCoordinaat].Getalwaarde = 0; //Zetten de waarde weer op 0
-					// 	UpdateRijen(rijenLijst, Sudoku, yCoordinaat); //Updaten de rijen en kolommen
-					// 	UpdateKolommen(kolommenLijst, Sudoku, xCoordinaat);
-					// 	Cursor--; //En zetten de cursor een tikkie achteruit
-					// 	ZittenWeInDeAchteruit = true; //We gaan nu terug, dus we zitten in de achteruit!
-					// 								  //System.Console.WriteLine("Stack is leeg, en nu weer gevuld!");
+					if (UpToDateMogelijkHedenPerCel[Cursor].Count == 0)
+					{
+						Geschiedenis.RemoveAt(Geschiedenis.Count-1);
+						Cursor--; //En zetten de cursor een tikkie achteruit
+						ZittenWeInDeAchteruit = true; //We gaan nu terug, dus we zitten in de achteruit!
+													  //System.Console.WriteLine("Stack is leeg, en nu weer gevuld!");
 
-					// 	continue; //Continue betekent: ga naar de volgende iteratie van de while loop en skip wat hieronder staat.
-					// }
+						continue; //Continue betekent: ga naar de volgende iteratie van de while loop en skip wat hieronder staat.
+					}
 
 					if (Sudoku[yCoordinaat, xCoordinaat].Locked) //Als hij locked is...
 					{
@@ -221,24 +224,27 @@ namespace MyApp
 					}
 
 					ZittenWeInDeAchteruit = false; //We zetten em weer op default waarde
+					
+
+					//------WE BETREDDEN NU HYPOTHETISCH GEBIED------
 
 					Sudoku[yCoordinaat, xCoordinaat].Getalwaarde = UpToDateMogelijkHedenPerCel[Cursor].Pop(); //Pak de bovenste van de stack!
 
 					//Wordt nu een van de domeinen leeg? Dan terug, anders door.
 					//Dus: ga elk vakje in rij, kolom, en blok na en pas hun domeinen aan. Is een van deze nu leeg? Reset alle domeinen. Continue
 					bool IkBenLeegHelpHelp = false;
-					List<int> BijHoudLijstje = new List<int>();
+					//List<int> BijHoudLijstje = new List<int>();
 
 					// Update de domeinen van vakjes na het huidige vakje in de rij
 					for (int x = xCoordinaat + 1; x < 9; x++)
 					{
 						UpdateDomeinenVoorCel(Sudoku, UpToDateMogelijkHedenPerCel, yCoordinaat, x);
-						BijHoudLijstje.Add(yCoordinaat * 9 + x);
+						//BijHoudLijstje.Add(yCoordinaat * 9 + x);
 
 						if (UpToDateMogelijkHedenPerCel[yCoordinaat * 9 + x].Count == 0)
 						{
 							IkBenLeegHelpHelp = true; //De stack is leeg, dus we breken de loop
-							ResetLijstjes(BijHoudLijstje, Sudoku, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel, x, yCoordinaat);
+							//ResetLijstjes(BijHoudLijstje, Sudoku, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel, yCoordinaat, x);
 							break;
 						}
 					}
@@ -249,11 +255,11 @@ namespace MyApp
 						if (!IkBenLeegHelpHelp)
 						{
 							UpdateDomeinenVoorCel(Sudoku, UpToDateMogelijkHedenPerCel, y, xCoordinaat);
-							BijHoudLijstje.Add(y * 9 + xCoordinaat);
+							//BijHoudLijstje.Add(y * 9 + xCoordinaat);
 							if (UpToDateMogelijkHedenPerCel[y * 9 + xCoordinaat].Count == 0)
 							{
 								IkBenLeegHelpHelp = true; //De stack is leeg, dus we breken de loop
-								ResetLijstjes(BijHoudLijstje, Sudoku, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel, xCoordinaat, y);
+								//ResetLijstjes(BijHoudLijstje, Sudoku, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel, y, xCoordinaat);
 								break;
 							}
 
@@ -275,11 +281,11 @@ namespace MyApp
 								if (x > xCoordinaat & !IkBenLeegHelpHelp)
 								{
 									UpdateDomeinenVoorCel(Sudoku, UpToDateMogelijkHedenPerCel, y, x);
-									BijHoudLijstje.Add(y * 9 + x);
+									//BijHoudLijstje.Add(y * 9 + x);
 									if (UpToDateMogelijkHedenPerCel[y * 9 + xCoordinaat].Count == 0)
 									{
 										IkBenLeegHelpHelp = true; //De stack is leeg, dus we breken de loop
-										ResetLijstjes(BijHoudLijstje, Sudoku, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel, x, y);
+										//ResetLijstjes(BijHoudLijstje, Sudoku, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel, y, x);
 										break;
 									}
 								}
@@ -287,11 +293,11 @@ namespace MyApp
 							if (y > yCoordinaat & !IkBenLeegHelpHelp)
 							{
 								UpdateDomeinenVoorCel(Sudoku, UpToDateMogelijkHedenPerCel, y, x);
-								BijHoudLijstje.Add(y * 9 + x);
+								//BijHoudLijstje.Add(y * 9 + x);
 								if (UpToDateMogelijkHedenPerCel[y * 9 + xCoordinaat].Count == 0)
 								{
 									IkBenLeegHelpHelp = true; //De stack is leeg, dus we breken de loop
-									ResetLijstjes(BijHoudLijstje, Sudoku, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel, x, y);
+									//ResetLijstjes(BijHoudLijstje, Sudoku, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel, y, x);
 									break;
 								}
 							}
@@ -299,12 +305,17 @@ namespace MyApp
 					}
 
 					//Als er maar één ding leeg was, moeten we alle domeinen weer hervullen en een stap terug.
-					if (IkBenLeegHelpHelp)
+					if (!IkBenLeegHelpHelp)
 					{
+						Geschiedenis.Add(UpToDateMogelijkHedenPerCel);
+						Cursor++;
+					}
 
-
-
-
+					if(IkBenLeegHelpHelp) {
+						Stack<int> DomeinVanAlleenDezeCel = UpToDateMogelijkHedenPerCel[Cursor];
+						Geschiedenis[Geschiedenis.Count-1][Cursor] = DomeinVanAlleenDezeCel;
+						continue;
+						//Draai de wijziging in domeinen terug, maar het maak het domein waar je mee bezig bent wel een stapje kleiner. Check bovenaan als die leeg is, want dan moet je weer een stap terug en de cursor een plekje naar achter verplaatsen.
 					}
 
 
