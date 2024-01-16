@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using System.ComponentModel;
@@ -183,7 +183,7 @@ namespace MyApp
 				List<List<int>> kolommenLijst = MaakKolommenLijst(Sudoku);
 				List<Stack<int>> OrgineleMogelijkHedenPerCel = MaakMogelijkHedenPerCel2(Sudoku, rijenLijst, kolommenLijst);
 				List<Stack<int>> UpToDateMogelijkHedenPerCel = new List<Stack<int>>(OrgineleMogelijkHedenPerCel);
-				
+
 				int Cursor = 0; //We beginnen met de cursor op puntje bij de 1e item uit de sudoku.
 				bool ZittenWeInDeAchteruit = false; //Bool om bij te houden of we terug aan het gaan zijn!
 
@@ -221,23 +221,24 @@ namespace MyApp
 					}
 
 					ZittenWeInDeAchteruit = false; //We zetten em weer op default waarde
-					
+
 					Sudoku[yCoordinaat, xCoordinaat].Getalwaarde = UpToDateMogelijkHedenPerCel[Cursor].Pop(); //Pak de bovenste van de stack!
 
 					//Wordt nu een van de domeinen leeg? Dan terug, anders door.
 					//Dus: ga elk vakje in rij, kolom, en blok na en pas hun domeinen aan. Is een van deze nu leeg? Reset alle domeinen. Continue
 					bool IkBenLeegHelpHelp = false;
-					List<int>BijHoudLijstje = new List<int>();
+					List<int> BijHoudLijstje = new List<int>();
 
 					// Update de domeinen van vakjes na het huidige vakje in de rij
 					for (int x = xCoordinaat + 1; x < 9; x++)
 					{
 						UpdateDomeinenVoorCel(Sudoku, UpToDateMogelijkHedenPerCel, yCoordinaat, x);
-						BijHoudLijstje.Add(yCoordinaat*9+x);
+						BijHoudLijstje.Add(yCoordinaat * 9 + x);
 
-						if (UpToDateMogelijkHedenPerCel[yCoordinaat*9+x].Count == 0) {
+						if (UpToDateMogelijkHedenPerCel[yCoordinaat * 9 + x].Count == 0)
+						{
 							IkBenLeegHelpHelp = true; //De stack is leeg, dus we breken de loop
-							ResetLijstjes(BijHoudLijstje, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel);
+							ResetLijstjes(BijHoudLijstje, Sudoku, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel, x, yCoordinaat);
 							break;
 						}
 					}
@@ -245,16 +246,17 @@ namespace MyApp
 					// Update de domeinen van vakjes na het huidige vakje in de kolom
 					for (int y = yCoordinaat + 1; y < 9; y++)
 					{
-						if(!IkBenLeegHelpHelp) {
+						if (!IkBenLeegHelpHelp)
+						{
 							UpdateDomeinenVoorCel(Sudoku, UpToDateMogelijkHedenPerCel, y, xCoordinaat);
-							BijHoudLijstje.Add(y*9+xCoordinaat);
-							if (UpToDateMogelijkHedenPerCel[y*9+xCoordinaat].Count == 0) 
-								{
+							BijHoudLijstje.Add(y * 9 + xCoordinaat);
+							if (UpToDateMogelijkHedenPerCel[y * 9 + xCoordinaat].Count == 0)
+							{
 								IkBenLeegHelpHelp = true; //De stack is leeg, dus we breken de loop
-								ResetLijstjes(BijHoudLijstje, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel);
+								ResetLijstjes(BijHoudLijstje, Sudoku, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel, xCoordinaat, y);
 								break;
-								}
-						
+							}
+
 						}
 
 					}
@@ -262,7 +264,7 @@ namespace MyApp
 					// Update de domeinen van vakjes na het huidige vakje in het blok
 					int blokYStart = yCoordinaat - (yCoordinaat % 3);
 					int blokXStart = xCoordinaat - (xCoordinaat % 3);
-					
+
 
 					for (int y = blokYStart; y < blokYStart + 3; y++)
 					{
@@ -273,37 +275,38 @@ namespace MyApp
 								if (x > xCoordinaat & !IkBenLeegHelpHelp)
 								{
 									UpdateDomeinenVoorCel(Sudoku, UpToDateMogelijkHedenPerCel, y, x);
-									BijHoudLijstje.Add(y*9+x);
-									if (UpToDateMogelijkHedenPerCel[y*9+xCoordinaat].Count == 0) 
-										{
+									BijHoudLijstje.Add(y * 9 + x);
+									if (UpToDateMogelijkHedenPerCel[y * 9 + xCoordinaat].Count == 0)
+									{
 										IkBenLeegHelpHelp = true; //De stack is leeg, dus we breken de loop
-										ResetLijstjes(BijHoudLijstje, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel);
+										ResetLijstjes(BijHoudLijstje, Sudoku, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel, x, y);
 										break;
-										}
-										}
+									}
+								}
 							}
-							if (y>yCoordinaat &!IkBenLeegHelpHelp)
+							if (y > yCoordinaat & !IkBenLeegHelpHelp)
 							{
 								UpdateDomeinenVoorCel(Sudoku, UpToDateMogelijkHedenPerCel, y, x);
-								BijHoudLijstje.Add(y*9+x);
-									if (UpToDateMogelijkHedenPerCel[y*9+xCoordinaat].Count == 0) 
-									{
+								BijHoudLijstje.Add(y * 9 + x);
+								if (UpToDateMogelijkHedenPerCel[y * 9 + xCoordinaat].Count == 0)
+								{
 									IkBenLeegHelpHelp = true; //De stack is leeg, dus we breken de loop
-									ResetLijstjes(BijHoudLijstje, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel);
+									ResetLijstjes(BijHoudLijstje, Sudoku, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel, x, y);
 									break;
-									}
+								}
 							}
 						}
 					}
 
 					//Als er maar één ding leeg was, moeten we alle domeinen weer hervullen en een stap terug.
-					if(IkBenLeegHelpHelp) {
-						
+					if (IkBenLeegHelpHelp)
+					{
+
 
 
 
 					}
-					
+
 
 					// else //Op moment dat het wél klopt, aldus het getal correct is ingevuld en met niks stramt... 
 					// {
@@ -334,25 +337,35 @@ namespace MyApp
 			}
 		}
 
-        static void ResetLijstjes(List<int> bijHoudLijstje, List<Stack<int>> mogelijkhedenLijst, List<Stack<int>> OrginelemogelijkhedenLijst)
-        {
+		static void ResetLijstjes(List<int> bijhoudlijstje, Nummer[,] sudoku, List<Stack<int>> mogelijkhedenLijst, List<Stack<int>> OrginelemogelijkhedenLijst, int y, int x)
+		{
+			int ingevuldGetal = sudoku[y, x].Getalwaarde;
 			//Loop alle veranderingen langs en reset ze tot de default waarden van de Orginele lijst.
-           foreach (int index in bijHoudLijstje) {
-			mogelijkhedenLijst[index] = OrginelemogelijkhedenLijst[index];
-		   }
-        }
+			foreach (int index in bijhoudlijstje)
+			{
+				if (OrginelemogelijkhedenLijst[index].Contains(ingevuldGetal))
+				{
+					List<int> temp = mogelijkhedenLijst[index].ToList();
+					temp.Add(ingevuldGetal);
+					temp.Sort();
+					temp.Reverse();
+					mogelijkhedenLijst[index] = new Stack<int>(temp);
 
-        static void UpdateDomeinenVoorCel(Nummer[,] sudoku, List<Stack<int>> mogelijkhedenLijst, int y, int x)
-{
-    if (!sudoku[y, x].Locked)
-    {
-        // Verwijder het recent ingevulde getal uit het domein van het huidige vakje
-        int ingevuldGetal = sudoku[y, x].Getalwaarde;
-		List<int> temp = mogelijkhedenLijst[y * 9 + x].ToList();
-		temp.Remove(ingevuldGetal);
-		mogelijkhedenLijst[y * 9 + x] = new Stack<int>(temp);
-    }
-}
+				}
+			}
+		}
+
+		static void UpdateDomeinenVoorCel(Nummer[,] sudoku, List<Stack<int>> mogelijkhedenLijst, int y, int x)
+		{
+			if (!sudoku[y, x].Locked)
+			{
+				// Verwijder het recent ingevulde getal uit het domein van het huidige vakje
+				int ingevuldGetal = sudoku[y, x].Getalwaarde;
+				List<int> temp = mogelijkhedenLijst[y * 9 + x].ToList();
+				temp.Remove(ingevuldGetal);
+				mogelijkhedenLijst[y * 9 + x] = new Stack<int>(temp);
+			}
+		}
 		static void PrintSudoku(Nummer[,] sudoku) //Alleen voor debug printen, van gpt
 		{
 			for (int i = 0; i < 9; i++)
@@ -482,7 +495,7 @@ namespace MyApp
 						List<int> mogelijkheden = alleGetallen.Except(rijenLijst[i].Concat(kolommenLijst[j]).Concat(blokGetallen)).ToList();
 						mogelijkheden.Sort(); //Sorteer de lijst...
 						mogelijkheden.Reverse(); //En draai em om zodat hij goed op de stack komt!
-						// Voeg de mogelijkheden toe aan de stack
+												 // Voeg de mogelijkheden toe aan de stack
 						foreach (var mogelijkheid in mogelijkheden)
 						{
 							mogelijkhedenStack.Push(mogelijkheid);
@@ -497,83 +510,83 @@ namespace MyApp
 			return mogelijkhedenStacks;
 		}
 
-	
 
 
-	static bool StaatMijnWaardeAlInHetBlok(Nummer[,] sudoku, int rij, int kolom) //Checker of de waarde al in het blok staat
-	{
-		int blokYCoordinaat = rij / 3;  // Bereken het blokcoordinaat voor de rij (door de int hoef je niet te flooren)
-		int blokXCoordinaat = kolom / 3;  // Bereken het blokcoordinaat voor de kolom
 
-		for (int y = blokYCoordinaat * 3; y < 3 + blokYCoordinaat * 3; y++) //We gaan alle cellen in het blok doorlopen
+		static bool StaatMijnWaardeAlInHetBlok(Nummer[,] sudoku, int rij, int kolom) //Checker of de waarde al in het blok staat
 		{
-			for (int x = blokXCoordinaat * 3; x < 3 + blokXCoordinaat * 3; x++)
+			int blokYCoordinaat = rij / 3;  // Bereken het blokcoordinaat voor de rij (door de int hoef je niet te flooren)
+			int blokXCoordinaat = kolom / 3;  // Bereken het blokcoordinaat voor de kolom
+
+			for (int y = blokYCoordinaat * 3; y < 3 + blokYCoordinaat * 3; y++) //We gaan alle cellen in het blok doorlopen
 			{
-				// Controleer of de waarde al in het blok zit, behalve de cel waarin we net hebben veranderd
-				if (y != rij || x != kolom)
+				for (int x = blokXCoordinaat * 3; x < 3 + blokXCoordinaat * 3; x++)
 				{
-					if (sudoku[y, x].Getalwaarde == sudoku[rij, kolom].Getalwaarde) //Het getal dat je invult kan nooit een nul zijn, dus daar hoef je geen eexception voor te schrijven
+					// Controleer of de waarde al in het blok zit, behalve de cel waarin we net hebben veranderd
+					if (y != rij || x != kolom)
 					{
-						return true;  // De waarde zit al in het blok
+						if (sudoku[y, x].Getalwaarde == sudoku[rij, kolom].Getalwaarde) //Het getal dat je invult kan nooit een nul zijn, dus daar hoef je geen eexception voor te schrijven
+						{
+							return true;  // De waarde zit al in het blok
+						}
 					}
 				}
 			}
+
+			return false;  // De waarde zit nog niet in het blok
 		}
 
-		return false;  // De waarde zit nog niet in het blok
-	}
-
-	static List<List<int>> MaakRijenLijst(Nummer[,] sudoku) //Functie om adhv een gehele sudoku een rijenlijst aan te maken.
-	{
-		List<List<int>> rijenLijst = new List<List<int>>(); //Lijst aanmaken
-
-		for (int i = 0; i < 9; i++) //Loop alle rijen vd sudoku langs
+		static List<List<int>> MaakRijenLijst(Nummer[,] sudoku) //Functie om adhv een gehele sudoku een rijenlijst aan te maken.
 		{
-			List<int> rij = new List<int>();
-			for (int j = 0; j < 9; j++) //En pak elk item uit die rij!
+			List<List<int>> rijenLijst = new List<List<int>>(); //Lijst aanmaken
+
+			for (int i = 0; i < 9; i++) //Loop alle rijen vd sudoku langs
 			{
-				rij.Add(sudoku[i, j].Getalwaarde);
+				List<int> rij = new List<int>();
+				for (int j = 0; j < 9; j++) //En pak elk item uit die rij!
+				{
+					rij.Add(sudoku[i, j].Getalwaarde);
+				}
+				rijenLijst.Add(rij);
 			}
-			rijenLijst.Add(rij);
+
+			return rijenLijst;
 		}
 
-		return rijenLijst;
-	}
-
-	static List<List<int>> MaakKolommenLijst(Nummer[,] sudoku) //Idem aan de Rij variant
-	{
-		List<List<int>> kolommenLijst = new List<List<int>>(); //Lijst aanmaken
-
-		for (int j = 0; j < 9; j++) //Loop alle kolommen langs uit de sudoku...
+		static List<List<int>> MaakKolommenLijst(Nummer[,] sudoku) //Idem aan de Rij variant
 		{
-			List<int> kolom = new List<int>();
-			for (int i = 0; i < 9; i++) //En pak elk item uit die kolom!
+			List<List<int>> kolommenLijst = new List<List<int>>(); //Lijst aanmaken
+
+			for (int j = 0; j < 9; j++) //Loop alle kolommen langs uit de sudoku...
 			{
-				kolom.Add(sudoku[i, j].Getalwaarde);
+				List<int> kolom = new List<int>();
+				for (int i = 0; i < 9; i++) //En pak elk item uit die kolom!
+				{
+					kolom.Add(sudoku[i, j].Getalwaarde);
+				}
+				kolommenLijst.Add(kolom);
 			}
-			kolommenLijst.Add(kolom);
+
+			return kolommenLijst;
 		}
 
-		return kolommenLijst;
-	}
-
-	static List<int> MaakBlokGetallenLijst(Nummer[,] sudoku, int rij, int kolom)
-	{
-		int blokYCoordinaat = rij / 3;
-		int blokXCoordinaat = kolom / 3;
-
-		List<int> blokGetallenLijst = new List<int>();
-
-		for (int y = blokYCoordinaat * 3; y < 3 + blokYCoordinaat * 3; y++)
+		static List<int> MaakBlokGetallenLijst(Nummer[,] sudoku, int rij, int kolom)
 		{
-			for (int x = blokXCoordinaat * 3; x < 3 + blokXCoordinaat * 3; x++)
+			int blokYCoordinaat = rij / 3;
+			int blokXCoordinaat = kolom / 3;
+
+			List<int> blokGetallenLijst = new List<int>();
+
+			for (int y = blokYCoordinaat * 3; y < 3 + blokYCoordinaat * 3; y++)
 			{
-				blokGetallenLijst.Add(sudoku[y, x].Getalwaarde);
+				for (int x = blokXCoordinaat * 3; x < 3 + blokXCoordinaat * 3; x++)
+				{
+					blokGetallenLijst.Add(sudoku[y, x].Getalwaarde);
+				}
 			}
+
+			return blokGetallenLijst;
 		}
 
-		return blokGetallenLijst;
-	}
-	
 	}
 }
