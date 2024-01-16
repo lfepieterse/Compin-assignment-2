@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using System.ComponentModel;
@@ -29,7 +29,7 @@ namespace MyApp
 
 		static void Main(string[] args)
 		{
-			KiesAlgoritme(1);
+			KiesAlgoritme(2);
 		}
 
 		static void KiesAlgoritme(int nummer)
@@ -147,7 +147,7 @@ namespace MyApp
 			if (nummer == 2)
 			{
 
-				Console.WriteLine("Hoi, geef input in een reeks aan getallen!"); //Debug string
+				Console.WriteLine("Hoi, geef eens input in een reeks aan getallen!"); //Debug string
 
 				string lezen = Console.ReadLine(); //Ervan uitgaande dat er input is, met spaties
 				string input = string.Join("", lezen.Split(' ')); //Zet het om naar een leesbare string!
@@ -181,7 +181,152 @@ namespace MyApp
 				//Nu lijsten aanmaken van rijen, van kollomen, en de mogelijkheden per cel!
 				List<List<int>> rijenLijst = MaakRijenLijst(Sudoku);
 				List<List<int>> kolommenLijst = MaakKolommenLijst(Sudoku);
-				List<Stack<int>> MogelijkHedenPerCel = MaakMogelijkHedenPerCel2(Sudoku);
+				List<Stack<int>> OrgineleMogelijkHedenPerCel = MaakMogelijkHedenPerCel2(Sudoku, rijenLijst, kolommenLijst);
+				List<Stack<int>> UpToDateMogelijkHedenPerCel = new List<Stack<int>>(OrgineleMogelijkHedenPerCel);
+				
+				int Cursor = 0; //We beginnen met de cursor op puntje bij de 1e item uit de sudoku.
+				bool ZittenWeInDeAchteruit = false; //Bool om bij te houden of we terug aan het gaan zijn!
+
+				while (Cursor < 81) //Zodra de cursor voorbij cel 80 is, ben je klaar met de sudoku!
+				{
+					//Als de stack waarvan we de mogelijkheid willen checken leeg is, moet deze waarde van dit item op 9 worden gezet, 
+					//de stack worden aangevuld en de cursor een stap terug. We moeten wel voorkomen dat we terug gaan, bij een locked aankomen, en daardoor weer vooruitgaan!
+					//Daarom heb ik een bool anagemaakt die checkt of we 'naar achter' bewegen. Zo ja, en we komen bij een locked cel aan, gaan we nog een stapje achteruit!
+					//Console.WriteLine(Cursor);
+
+					int yCoordinaat = Cursor / 9; //Van Cursor naar coodinaat. Rekentrucje om van een getal tussen 0 en 80 naar de coordinaat in de 2D array te gaan
+					int xCoordinaat = Cursor % 9;
+
+					//Op moment dat de mogelijkheden lijst empty is, hervullen we de stack, zetten we de waarde op 0 en gaat de cursor eentje achteruit!
+					// if (MogelijkHedenPerCel2[Cursor].Count == 0)
+					// {
+					// 	MogelijkHedenPerCel[Cursor] = HerVulStack(); //We hervullen de stack
+					// 	Sudoku[yCoordinaat, xCoordinaat].Getalwaarde = 0; //Zetten de waarde weer op 0
+					// 	UpdateRijen(rijenLijst, Sudoku, yCoordinaat); //Updaten de rijen en kolommen
+					// 	UpdateKolommen(kolommenLijst, Sudoku, xCoordinaat);
+					// 	Cursor--; //En zetten de cursor een tikkie achteruit
+					// 	ZittenWeInDeAchteruit = true; //We gaan nu terug, dus we zitten in de achteruit!
+					// 								  //System.Console.WriteLine("Stack is leeg, en nu weer gevuld!");
+
+					// 	continue; //Continue betekent: ga naar de volgende iteratie van de while loop en skip wat hieronder staat.
+					// }
+
+					if (Sudoku[yCoordinaat, xCoordinaat].Locked) //Als hij locked is...
+					{
+						if (ZittenWeInDeAchteruit) { Cursor--; } //Als we in de achteruitzitten en we komen aan bij een locked cel, moeten we nog eentje naar achteren!
+						else { Cursor++; } //Anders gaan we gewoon weer door naar de volgende cel
+										   //System.Console.WriteLine("Locked!");
+						continue;
+
+					}
+
+					ZittenWeInDeAchteruit = false; //We zetten em weer op default waarde
+					
+					Sudoku[yCoordinaat, xCoordinaat].Getalwaarde = UpToDateMogelijkHedenPerCel[Cursor].Pop(); //Pak de bovenste van de stack!
+
+					//Wordt nu een van de domeinen leeg? Dan terug, anders door.
+					//Dus: ga elk vakje in rij, kolom, en blok na en pas hun domeinen aan. Is een van deze nu leeg? Reset alle domeinen. Continue
+					bool IkBenLeegHelpHelp = false;
+					List<int>BijHoudLijstje = new List<int>();
+
+					// Update de domeinen van vakjes na het huidige vakje in de rij
+					for (int x = xCoordinaat + 1; x < 9; x++)
+					{
+						UpdateDomeinenVoorCel(Sudoku, UpToDateMogelijkHedenPerCel, yCoordinaat, x);
+						BijHoudLijstje.Add(yCoordinaat*9+x);
+
+						if (UpToDateMogelijkHedenPerCel[yCoordinaat*9+x].Count == 0) {
+							IkBenLeegHelpHelp = true; //De stack is leeg, dus we breken de loop
+							ResetLijstjes(BijHoudLijstje, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel);
+							break;
+						}
+					}
+
+					// Update de domeinen van vakjes na het huidige vakje in de kolom
+					for (int y = yCoordinaat + 1; y < 9; y++)
+					{
+						if(!IkBenLeegHelpHelp) {
+							UpdateDomeinenVoorCel(Sudoku, UpToDateMogelijkHedenPerCel, y, xCoordinaat);
+							BijHoudLijstje.Add(y*9+xCoordinaat);
+							if (UpToDateMogelijkHedenPerCel[y*9+xCoordinaat].Count == 0) 
+								{
+								IkBenLeegHelpHelp = true; //De stack is leeg, dus we breken de loop
+								ResetLijstjes(BijHoudLijstje, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel);
+								break;
+								}
+						
+						}
+
+					}
+
+					// Update de domeinen van vakjes na het huidige vakje in het blok
+					int blokYStart = yCoordinaat - (yCoordinaat % 3);
+					int blokXStart = xCoordinaat - (xCoordinaat % 3);
+					
+
+					for (int y = blokYStart; y < blokYStart + 3; y++)
+					{
+						for (int x = blokXStart; x < blokXStart + 3; x++)
+						{
+							if (y == yCoordinaat)
+							{
+								if (x > xCoordinaat & !IkBenLeegHelpHelp)
+								{
+									UpdateDomeinenVoorCel(Sudoku, UpToDateMogelijkHedenPerCel, y, x);
+									BijHoudLijstje.Add(y*9+x);
+									if (UpToDateMogelijkHedenPerCel[y*9+xCoordinaat].Count == 0) 
+										{
+										IkBenLeegHelpHelp = true; //De stack is leeg, dus we breken de loop
+										ResetLijstjes(BijHoudLijstje, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel);
+										break;
+										}
+										}
+							}
+							if (y>yCoordinaat &!IkBenLeegHelpHelp)
+							{
+								UpdateDomeinenVoorCel(Sudoku, UpToDateMogelijkHedenPerCel, y, x);
+								BijHoudLijstje.Add(y*9+x);
+									if (UpToDateMogelijkHedenPerCel[y*9+xCoordinaat].Count == 0) 
+									{
+									IkBenLeegHelpHelp = true; //De stack is leeg, dus we breken de loop
+									ResetLijstjes(BijHoudLijstje, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel);
+									break;
+									}
+							}
+						}
+					}
+
+					//Als er maar één ding leeg was, moeten we alle domeinen weer hervullen en een stap terug.
+					if(IkBenLeegHelpHelp) {
+						
+
+
+
+					}
+					
+
+					// else //Op moment dat het wél klopt, aldus het getal correct is ingevuld en met niks stramt... 
+					// {
+					// 	//System.Console.WriteLine($"Dit ging goed, ik heb {Sudoku[yCoordinaat, xCoordinaat].Getalwaarde} ingevuld en ga de rijen en kolommen updaten!");
+					// 	//Update de rijen en kolommen lijst. (blokken is geen lijst van en hoeft niet upgedate te worden)
+					// 	UpdateRijen(rijenLijst, Sudoku, yCoordinaat);
+					// 	UpdateKolommen(kolommenLijst, Sudoku, xCoordinaat);
+
+					// 	//En doe Cursor naar de volgende: 
+					// 	Cursor++;
+					// 	ZittenWeInDeAchteruit = false;
+					// }
+
+				}
+
+				//Als hij hier uitkomt is hij klaar!
+
+				stopwatch.Stop(); //STOP DE TIJD!
+				System.Console.WriteLine("----------------------------------");
+				Console.WriteLine("Best Solution:");
+				PrintSudoku(Sudoku);
+				System.Console.WriteLine(stopwatch.Elapsed.ToString()); //Print de tijd!
+
 			}
 			if (nummer == 3)
 			{
@@ -189,6 +334,25 @@ namespace MyApp
 			}
 		}
 
+        static void ResetLijstjes(List<int> bijHoudLijstje, List<Stack<int>> mogelijkhedenLijst, List<Stack<int>> OrginelemogelijkhedenLijst)
+        {
+			//Loop alle veranderingen langs en reset ze tot de default waarden van de Orginele lijst.
+           foreach (int index in bijHoudLijstje) {
+			mogelijkhedenLijst[index] = OrginelemogelijkhedenLijst[index];
+		   }
+        }
+
+        static void UpdateDomeinenVoorCel(Nummer[,] sudoku, List<Stack<int>> mogelijkhedenLijst, int y, int x)
+{
+    if (!sudoku[y, x].Locked)
+    {
+        // Verwijder het recent ingevulde getal uit het domein van het huidige vakje
+        int ingevuldGetal = sudoku[y, x].Getalwaarde;
+		List<int> temp = mogelijkhedenLijst[y * 9 + x].ToList();
+		temp.Remove(ingevuldGetal);
+		mogelijkhedenLijst[y * 9 + x] = new Stack<int>(temp);
+    }
+}
 		static void PrintSudoku(Nummer[,] sudoku) //Alleen voor debug printen, van gpt
 		{
 			for (int i = 0; i < 9; i++)
@@ -289,7 +453,7 @@ namespace MyApp
 			return mogelijkhedenStacks;
 		}
 
-		static List<Stack<int>> MaakMogelijkHedenPerCel2(Nummer[,] sudoku) //Functie die stacks aan maakt met de mogelijkheden per cel.
+		static List<Stack<int>> MaakMogelijkHedenPerCel2(Nummer[,] sudoku, List<List<int>> rijenLijst, List<List<int>> kolommenLijst) //Functie die stacks aan maakt met de mogelijkheden per cel.
 		{
 			List<Stack<int>> mogelijkhedenStacks = new List<Stack<int>>(); //We gaan een lijst aan stacks maken
 
@@ -309,12 +473,15 @@ namespace MyApp
 					else
 					{
 
+						List<int> alleGetallen = Enumerable.Range(1, 9).ToList();
+
 						// Haal getallen uit het blok
 						List<int> blokGetallen = MaakBlokGetallenLijst(sudoku, i, j);
 
 						// Bereken het verschil tussen alleGetallen en de gecombineerde lijst van rij, kolom en blok
 						List<int> mogelijkheden = alleGetallen.Except(rijenLijst[i].Concat(kolommenLijst[j]).Concat(blokGetallen)).ToList();
-
+						mogelijkheden.Sort(); //Sorteer de lijst...
+						mogelijkheden.Reverse(); //En draai em om zodat hij goed op de stack komt!
 						// Voeg de mogelijkheden toe aan de stack
 						foreach (var mogelijkheid in mogelijkheden)
 						{
@@ -330,7 +497,7 @@ namespace MyApp
 			return mogelijkhedenStacks;
 		}
 
-	}
+	
 
 
 	static bool StaatMijnWaardeAlInHetBlok(Nummer[,] sudoku, int rij, int kolom) //Checker of de waarde al in het blok staat
@@ -407,5 +574,6 @@ namespace MyApp
 
 		return blokGetallenLijst;
 	}
+	
+	}
 }
-
