@@ -422,9 +422,9 @@ namespace MyApp
 				Geschiedenis.Add(OrgineleMogelijkHedenPerCel); //We maken een volledige geschiedenis aan!
 
 				int Cursor = OrgineleMogelijkHedenPerCel.Keys.First();//We beginnen bij het element met de minste elementen.
-				//bool ZittenWeInDeAchteruit = false; //Bool om bij te houden of we terug aan het gaan zijn!
+																	  //bool ZittenWeInDeAchteruit = false; //Bool om bij te houden of we terug aan het gaan zijn!
 
-				while (Geschiedenis.Last().Values.First().Item2 < 100) //Zodra we aankomen bij de locked getallen (count == 100) zijn we klaar met de sudoku!
+				while (Geschiedenis.Last().Values.Any(item => item.Item2 == 0)) //Als een cel nog leeg is gaan we door
 				{
 					//iteraties++;
 					//System.Console.WriteLine("-------------------");
@@ -450,7 +450,7 @@ namespace MyApp
 
 
 
-
+					Cursor = UpToDateMogelijkHedenPerCel.Keys.First();//We beginnen bij het element met de minste elementen.
 
 
 					//UpToDateMogelijkHedenPerCel = new List<Stack<Geschiedenis[Vorige]>>; //We pakken de meest recente, dat is de up to date mogelijkheden.
@@ -490,9 +490,9 @@ namespace MyApp
 					//------WE BETREDDEN NU HYPOTHETISCH GEBIED------
 
 					Sudoku[yCoordinaat, xCoordinaat].Getalwaarde = UpToDateMogelijkHedenPerCel[Cursor].Item1.Pop(); //Pak de bovenste van de stack!
-					if (UpToDateMogelijkHedenPerCel.TryGetValue(Cursor, out var value))
+					if (UpToDateMogelijkHedenPerCel.TryGetValue(Cursor, out var variabel))
 					{
-						UpToDateMogelijkHedenPerCel[Cursor] = (value.Item1, 100);
+						UpToDateMogelijkHedenPerCel[Cursor] = (variabel.Item1, 100);
 					}                                                                  //System.Console.WriteLine($"We proberen {Sudoku[yCoordinaat, xCoordinaat].Getalwaarde}");
 																					   //Wordt nu een van de domeinen leeg? Dan terug, anders door.
 																					   //Dus: ga elk vakje in rij, kolom, en blok na en pas hun domeinen aan. Is een van deze nu leeg? Reset alle domeinen. Continue
@@ -580,7 +580,8 @@ namespace MyApp
 					{
 						//System.Console.WriteLine("Ik voeg toe aan de geschiedenis");
 						Geschiedenis.Add(UpToDateMogelijkHedenPerCel);
-						Cursor++;
+						Geschiedenis.Last().OrderBy(x => x.Value.Item2);
+						Cursor = Geschiedenis.Last().First().Key;
 					}
 
 					if (IkBenLeegHelpHelp)
