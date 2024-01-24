@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using System.ComponentModel;
 using System.Net;
+using System.Xml.Linq;
 namespace MyApp
 {
 
@@ -424,24 +425,30 @@ namespace MyApp
 				int Cursor = OrgineleMogelijkHedenPerCel.Keys.First();//We beginnen bij het element met de minste elementen.
 																	  //bool ZittenWeInDeAchteruit = false; //Bool om bij te houden of we terug aan het gaan zijn!
 
-				while (Geschiedenis.Last().Values.Any(item => item.Item2 == 0)) //Als een cel nog leeg is gaan we door
+				// while (Geschiedenis.Last().Values.Any(item => item.Item2 == 0)) //Als een cel nog leeg is gaan we door [klopt dit wel?!]
+				// {
+
+				while (BevatEenNul(Sudoku)) 
 				{
 					//iteraties++;
 					//System.Console.WriteLine("-------------------");
 					//System.Console.WriteLine($"{Cursor}");
-					//Als de stack waarvan we de mogelijkheid willen checken leeg is, moet deze waarde van dit item op 9 worden gezet, 
-					//de stack worden aangevuld en de cursor een stap terug. We moeten wel voorkomen dat we terug gaan, bij een locked aankomen, en daardoor weer vooruitgaan!
-					//Daarom heb ik een bool anagemaakt die checkt of we 'naar achter' bewegen. Zo ja, en we komen bij een locked cel aan, gaan we nog een stapje achteruit!
+					
 
+					//--Pak laatste item uit geschiedenis, vanuit daar gaan we werken---
 					Dictionary<int, (Stack<int>, int)> UpToDateMogelijkHedenPerCel = new Dictionary<int, (Stack<int>, int)>();
 
 					int Vorige = Geschiedenis.Count - 1;
-					Dictionary<int, (Stack<int>, int)> laatsteGeschiedenisItem = Geschiedenis[Vorige]
-						.ToDictionary(
-							kvp => kvp.Key,
-							kvp => (new Stack<int>(kvp.Value.Item1.OrderByDescending(x => x)), kvp.Value.Item2)
-						);
 
+					//Dit sorteren wil je helemaal niet doen hier, je wil constant een gesoorteerde lijst toevoegen eigenlijk.
+					 Dictionary<int, (Stack<int>, int)> laatsteGeschiedenisItem = Geschiedenis[Vorige]
+        .ToDictionary(
+            kvp => kvp.Key,
+            kvp => (new Stack<int>(kvp.Value.Item1.OrderByDescending(x => x)), kvp.Value.Item2)
+        );
+ 					
+					//Je hoeft niet meer te sorteren, dat is al gebeurd!
+					//Dictionary<int, (Stack<int>, int)> laatsteGeschiedenisItem = new Dictionary<int, (Stack<int>, int)>(Geschiedenis[Vorige]);
 					// Sorteer de nieuwe lijst van stacks op basis van de values (de domeinen)
 					foreach (var kvp in laatsteGeschiedenisItem.OrderBy(x => x.Value.Item2))
 					{
@@ -462,8 +469,8 @@ namespace MyApp
 					if (UpToDateMogelijkHedenPerCel[Cursor].Item2 == 0) // als domein leeg is...
 					{
 						//System.Console.WriteLine($"Aaaai, de stack van {Cursor} is leeg! We gaan een stap terug in de tijd");
-						Sudoku[yCoordinaat, xCoordinaat].Getalwaarde = 0;
-						Cursor = Geschiedenis[Geschiedenis.Count - 2].Keys.First();//En zetten de cursor een tikkie achteruit naar waar hij in het vorige geschiedenispunt was
+						Sudoku[yCoordinaat, xCoordinaat].Getalwaarde = 0; //Ik pas even de -2 aan naar -1 bij Geschiedenis.Count
+						Cursor = Geschiedenis[Geschiedenis.Count - 1].Keys.First();//En zetten de cursor een tikkie achteruit naar waar hij in het vorige geschiedenispunt was
 						Geschiedenis.RemoveAt(Geschiedenis.Count() - 1);
 						
 						yCoordinaat = Cursor / 9; //Van Cursor naar coodinaat. Rekentrucje om van een getal tussen 0 en 80 naar de coordinaat in de 2D array te gaan
@@ -492,20 +499,22 @@ namespace MyApp
 					Sudoku[yCoordinaat, xCoordinaat].Getalwaarde = UpToDateMogelijkHedenPerCel[Cursor].Item1.Pop(); //Pak de bovenste van de stack!
 					if (UpToDateMogelijkHedenPerCel.TryGetValue(Cursor, out var variabel))
 					{
-						UpToDateMogelijkHedenPerCel[Cursor] = (variabel.Item1, 100);
+						UpToDateMogelijkHedenPerCel[Cursor] = (variabel.Item1, 50); //[Klopt dit?!] 100, omdat hij daardoor achterin de lijst komt te staan. Je wil immers je net aangepast getal dalijk niet wéér aanpassen!
 					}                                                                  //System.Console.WriteLine($"We proberen {Sudoku[yCoordinaat, xCoordinaat].Getalwaarde}");
 																					   //Wordt nu een van de domeinen leeg? Dan terug, anders door.
 																					   //Dus: ga elk vakje in rij, kolom, en blok na en pas hun domeinen aan. Is een van deze nu leeg? Reset alle domeinen. Continue
 					bool IkBenLeegHelpHelp = false;
 					//List<int> BijHoudLijstje = new List<int>();
 
-					// Update de domeinen van vakjes na het huidige vakje in de rij
-					for (int x = xCoordinaat + 1; x < 9; x++)
+					// AHA! Dit klopt niet
+					// Update de domeinen van vakjes na het huidige vakje in de rij --> Nee, alle vakjes in de rij!
+					//for (int x = xCoordinaat + 1; x < 9; x++)
+					for(int x = 0; x<9 && x!=xCoordinaat;x++) //Je moet niet jezelf gaan checken!
 					{
 						UpdateDomeinenVoorCel2(Sudoku, UpToDateMogelijkHedenPerCel, yCoordinaat, x, Sudoku[yCoordinaat, xCoordinaat].Getalwaarde);
 						//BijHoudLijstje.Add(yCoordinaat * 9 + x);
-
-						if (UpToDateMogelijkHedenPerCel.TryGetValue(yCoordinaat * 9 + x, out var waarde) && waarde.Item2 == 0)
+						if (UpToDateMogelijkHedenPerCel[yCoordinaat*9+x].Item2==0)
+						//if (UpToDateMogelijkHedenPerCel.TryGetValue(yCoordinaat * 9 + x, out var waarde) && waarde.Item2 == 0)
 						{
 							IkBenLeegHelpHelp = true; //De stack is leeg, dus we breken de loop
 													  //System.Console.WriteLine("In de rijen check ging het niet goed! We Break");
@@ -515,13 +524,16 @@ namespace MyApp
 					}
 
 					// Update de domeinen van vakjes na het huidige vakje in de kolom
-					for (int y = yCoordinaat + 1; y < 9; y++)
+					//for (int y = yCoordinaat + 1; y < 9; y++)
+					for(int y = 0; y<9&&y!=yCoordinaat;y++)
+
 					{
 						if (!IkBenLeegHelpHelp)
 						{
 							UpdateDomeinenVoorCel2(Sudoku, UpToDateMogelijkHedenPerCel, y, xCoordinaat, Sudoku[yCoordinaat, xCoordinaat].Getalwaarde);
 							//BijHoudLijstje.Add(y * 9 + xCoordinaat);
-							if (UpToDateMogelijkHedenPerCel.TryGetValue(y * 9 + xCoordinaat, out var waarde) && waarde.Item2 == 0)
+							if (UpToDateMogelijkHedenPerCel[y*9+xCoordinaat].Item2==0)
+							//if (UpToDateMogelijkHedenPerCel.TryGetValue(y * 9 + xCoordinaat, out var waarde) && waarde.Item2 == 0)
 							{
 								//System.Console.WriteLine("In de kolommen check ging het niet goed! We Break");
 
@@ -543,13 +555,19 @@ namespace MyApp
 					{
 						for (int x = blokXStart; x < blokXStart + 3; x++)
 						{
-							if (y == yCoordinaat)
+							// if (y == yCoordinaat)
+							// {
+							// 	if (x > xCoordinaat & !IkBenLeegHelpHelp)
+							// 	{
+							if(!IkBenLeegHelpHelp && !(x==xCoordinaat&&y==yCoordinaat))
 							{
-								if (x > xCoordinaat & !IkBenLeegHelpHelp)
-								{
+
+								
 									UpdateDomeinenVoorCel2(Sudoku, UpToDateMogelijkHedenPerCel, y, x, Sudoku[yCoordinaat, xCoordinaat].Getalwaarde);
 									//BijHoudLijstje.Add(y * 9 + x);
-									if (UpToDateMogelijkHedenPerCel.TryGetValue(y * 9 + x, out var waarde) && waarde.Item2 == 0)
+									if (UpToDateMogelijkHedenPerCel[y*9+x].Item2==0)
+					
+									//if (UpToDateMogelijkHedenPerCel.TryGetValue(y * 9 + x, out var waarde) && waarde.Item2 == 0)
 									{
 										//System.Console.WriteLine($"In de blokken check ging het bij {(y,x)} niet goed! We Break");
 
@@ -557,21 +575,21 @@ namespace MyApp
 																  //ResetLijstjes(BijHoudLijstje, Sudoku, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel, y, x);
 										break;
 									}
-								}
+								//}
 							}
-							if (y > yCoordinaat & !IkBenLeegHelpHelp)
-							{
-								UpdateDomeinenVoorCel2(Sudoku, UpToDateMogelijkHedenPerCel, y, x, Sudoku[yCoordinaat, xCoordinaat].Getalwaarde);
-								//BijHoudLijstje.Add(y * 9 + x);
-								if (UpToDateMogelijkHedenPerCel.TryGetValue(y * 9 + x, out var waarde) && waarde.Item2 == 0)
-								{
-									//System.Console.WriteLine($"In de blokken check ging het bij {(y,x)} niet goed! We Break");
+							// if (y > yCoordinaat & !IkBenLeegHelpHelp)
+							// {
+							// 	UpdateDomeinenVoorCel2(Sudoku, UpToDateMogelijkHedenPerCel, y, x, Sudoku[yCoordinaat, xCoordinaat].Getalwaarde);
+							// 	//BijHoudLijstje.Add(y * 9 + x);
+							// 	if (UpToDateMogelijkHedenPerCel.TryGetValue(y * 9 + x, out var waarde) && waarde.Item2 == 0)
+							// 	{
+							// 		//System.Console.WriteLine($"In de blokken check ging het bij {(y,x)} niet goed! We Break");
 
-									IkBenLeegHelpHelp = true; //De stack is leeg, dus we breken de loop
-															  //ResetLijstjes(BijHoudLijstje, Sudoku, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel, y, x);
-									break;
-								}
-							}
+							// 		IkBenLeegHelpHelp = true; //De stack is leeg, dus we breken de loop
+							// 								  //ResetLijstjes(BijHoudLijstje, Sudoku, UpToDateMogelijkHedenPerCel, OrgineleMogelijkHedenPerCel, y, x);
+							// 		break;
+							// 	}
+							// }
 						}
 					}
 
@@ -579,15 +597,19 @@ namespace MyApp
 					if (!IkBenLeegHelpHelp)
 					{
 						//System.Console.WriteLine("Ik voeg toe aan de geschiedenis");
-						Geschiedenis.Add(UpToDateMogelijkHedenPerCel);
-						Geschiedenis.Last().OrderBy(x => x.Value.Item2);
-						Cursor = Geschiedenis.Last().First().Key;
+						Geschiedenis.Add(UpToDateMogelijkHedenPerCel); //Voeg toe aan geschiedenis: ons aangepaste domein
+						//Geschiedenis.Last().OrderBy(x => x.Value.Item2); //Order dit laatste geschiedenis item wel op domein grootte
+						// Geschiedenis[Geschiedenis.Count - 1] = Geschiedenis[Geschiedenis.Count - 1]
+						// 	.OrderBy(x => x.Value.Item2)
+						// 	.ToDictionary(kv => kv.Key, kv => kv.Value);
+						continue;
+						//Cursor = Geschiedenis.Last().First().Key; //Cursor wordt nu weer het bovenste item!
 					}
 
 					if (IkBenLeegHelpHelp)
 					{
 						Stack<int> DomeinVanAlleenDezeCel = UpToDateMogelijkHedenPerCel[Cursor].Item1;
-						int countVanAlleenDezeCel = UpToDateMogelijkHedenPerCel[Cursor].Item2;
+						int countVanAlleenDezeCel = DomeinVanAlleenDezeCel.Count;//hier moet je wel de count nemen! niet het getal 100
 						Geschiedenis[Geschiedenis.Count() - 1][Cursor] = (DomeinVanAlleenDezeCel, countVanAlleenDezeCel);
 
 						//System.Console.WriteLine("We updaten het domein van de laatse geschiedenis entry en proberen opnieuw");
@@ -622,6 +644,17 @@ namespace MyApp
 			}
 		}
 
+		static bool BevatEenNul(Nummer[,] sudoku)
+			{
+				foreach (Nummer hokje in sudoku)
+				{
+					if (hokje.Getalwaarde == 0)
+					{
+						return true;
+					}
+				}
+				return false;
+			}
 
 		static void UpdateDomeinenVoorCel(Nummer[,] sudoku, List<Stack<int>> mogelijkhedenLijst, int y, int x, int getalwaarde)
 		{
@@ -639,21 +672,22 @@ namespace MyApp
 
 		static void UpdateDomeinenVoorCel2(Nummer[,] sudoku, Dictionary<int, (Stack<int>, int)> mogelijkhedenLijst, int y, int x, int getalwaarde)
 		{
-			if (!sudoku[y, x].Locked)
+			if (!sudoku[y, x].Locked && sudoku[y, x].Getalwaarde!=0) //Laten we proberen domeinen niet te updaten als je al een getal hebt staan!
 			{
 				int ingevuldGetal = getalwaarde;
 
 				// Try to get the current domain from the dictionary
-				if (mogelijkhedenLijst.TryGetValue(y * 9 + x, out var value))
-				{
+				//if (mogelijkhedenLijst.TryGetValue(y * 9 + x, out var value))
+				//{
+					(Stack<int>, int) value = mogelijkhedenLijst[y*9+x];
 					List<int> temp = value.Item1.ToList();
 					temp.Remove(ingevuldGetal);
 					temp.Sort();
 					temp.Reverse();
 
 					// Update the dictionary with the modified domain
-					mogelijkhedenLijst[y * 9 + x] = (new Stack<int>(temp), value.Item2);
-				}
+					mogelijkhedenLijst[y * 9 + x] = (new Stack<int>(temp), temp.Count); //Een niewe stack, én een nieu getal!
+				//}
 
 				// Sort the dictionary based on the second value in ascending order
 				mogelijkhedenLijst = mogelijkhedenLijst.OrderBy(kv => kv.Value.Item2)
@@ -820,6 +854,7 @@ namespace MyApp
 					int count;
 					Stack<int> stack;
 
+				
 					if (cel.Locked)
 					{
 						// Als de cel Locked is, wil je alleen dat nummer op de stack.
