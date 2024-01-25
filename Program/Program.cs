@@ -65,6 +65,7 @@ namespace MyApp
 			{
 				Stopwatch stopwatch = new Stopwatch(); //We gebruiken een stopwatch om de tijd te meten!
 				stopwatch.Restart();
+				
 				//Nu lijsten aanmaken van rijen, van kollomen, en de mogelijkheden per cel!
 				List<List<int>> rijenLijst = MaakRijenLijst(Sudoku);
 				List<List<int>> kolommenLijst = MaakKolommenLijst(Sudoku);
@@ -75,9 +76,9 @@ namespace MyApp
 
 				while (Cursor < 81) //Zodra de cursor voorbij cel 80 is, ben je klaar met de sudoku!
 				{
-					//Als de stack waarvan we de mogelijkheid willen checken leeg is, moet deze waarde van dit item op 9 worden gezet, 
+					//Als de stack waarvan we de mogelijkheid willen checken leeg is, moet deze waarde van dit item op 0 worden gezet, 
 					//de stack worden aangevuld en de cursor een stap terug. We moeten wel voorkomen dat we terug gaan, bij een locked aankomen, en daardoor weer vooruitgaan!
-					//Daarom heb ik een bool anagemaakt die checkt of we 'naar achter' bewegen. Zo ja, en we komen bij een locked cel aan, gaan we nog een stapje achteruit!
+					//Daarom hebben we een bool anagemaakt die checkt of we 'naar achter' bewegen. Zo ja, en we komen bij een locked cel aan, gaan we nog een stapje achteruit!
 
 					int yCoordinaat = Cursor / 9; //Van Cursor naar coodinaat. Rekentrucje om van een getal tussen 0 en 80 naar de coordinaat in de 2D array te gaan
 					int xCoordinaat = Cursor % 9;
@@ -158,6 +159,8 @@ namespace MyApp
 					List<Stack<int>> UpToDateMogelijkHedenPerCel = new List<Stack<int>>();
 
 					int Vorige = Geschiedenis.Count - 1;
+
+					//Het laatste geschiedenis item is het laatste item in de geschiedenislijst!
 					List<Stack<int>> laatsteGeschiedenisItem = Geschiedenis[Vorige]
 						.Select(stack => new Stack<int>(stack.Reverse()))
 						.ToList();
@@ -201,13 +204,10 @@ namespace MyApp
 					}
 
 					ZittenWeInDeAchteruit = false; //We zetten em weer op default waarde
-
-
-					//------WE BETREDDEN NU HYPOTHETISCH GEBIED------
-
 					Sudoku[yCoordinaat, xCoordinaat].Getalwaarde = UpToDateMogelijkHedenPerCel[Cursor].Pop(); //Pak de bovenste van de stack!
-																											  //Wordt nu een van de domeinen leeg? Dan terug, anders door.
-																											  //Dus: ga elk vakje in rij, kolom, en blok na en pas hun domeinen aan. Is een van deze nu leeg? Reset alle domeinen. Continue
+					
+					//Wordt nu een van de domeinen leeg? Dan terug, anders door.
+					//Dus: ga elk vakje in rij, kolom, en blok na en pas hun domeinen aan. Is een van deze nu leeg? Reset alle domeinen en continue.
 					bool IkBenLeegHelpHelp = false;
 
 					// Update de domeinen van vakjes na het huidige vakje in de rij
@@ -271,13 +271,14 @@ namespace MyApp
 						}
 					}
 
-					//Als er maar één ding leeg was, moeten we alle domeinen weer hervullen en een stap terug.
+					//Is geen een domein leeg geraakt? Fantastisch! Voeg dan alle domeinen toe aan de geschiedenis en zet de cursor een stap vooruit!
 					if (!IkBenLeegHelpHelp)
 					{
 						Geschiedenis.Add(UpToDateMogelijkHedenPerCel);
 						Cursor++;
 					}
 
+					//Als er maar één ding leeg was, moeten we alle domeinen weer hervullen en een stap terug.
 					if (IkBenLeegHelpHelp)
 					{
 						//Draai de wijziging in domeinen terug, maar het maak het domein waar je mee bezig bent wel een stapje kleiner.
@@ -301,12 +302,12 @@ namespace MyApp
 			{
 				Stopwatch stopwatch = new Stopwatch(); //We gebruiken een stopwatch om de tijd te meten!
 				stopwatch.Restart();
+				
 				//Nu lijsten aanmaken van rijen, van kollomen, en de mogelijkheden per cel!
 				List<List<int>> rijenLijst = MaakRijenLijst(Sudoku);
 				List<List<int>> kolommenLijst = MaakKolommenLijst(Sudoku);
 				List<Dictionary<int, (Stack<int>, int)>> Geschiedenis = new List<Dictionary<int, (Stack<int>, int)>>(); //Lijst van dict met <gridnummer, (stack, aantal in domein)>
 				Dictionary<int, (Stack<int>, int)> OrgineleMogelijkHedenPerCel = MaakMogelijkHedenPerCel3(Sudoku, rijenLijst, kolommenLijst);
-
 				Dictionary<int, (Stack<int>, int)> OrgineleMogelijkHedenPerCeltemp = SorteerDictionary(OrgineleMogelijkHedenPerCel); //We zetten de domeinen op volgorde
 				Geschiedenis.Add(OrgineleMogelijkHedenPerCeltemp); //We maken een volledige geschiedenis aan!
 
@@ -341,7 +342,7 @@ namespace MyApp
 					}
 
 					Sudoku[yCoordinaat, xCoordinaat].Getalwaarde = UpToDateMogelijkHedenPerCel[Cursor].Item1.Pop(); //Pak de bovenste van de stack!
-					UpToDateMogelijkHedenPerCel[Cursor] = (UpToDateMogelijkHedenPerCel[Cursor].Item1, 50);
+					UpToDateMogelijkHedenPerCel[Cursor] = (UpToDateMogelijkHedenPerCel[Cursor].Item1, 50); //50 is een random, hoge waarde zodat als je een vakje hebt aangepast deze naar onder gaat in de aangepaste lijst!
 					bool IkBenLeegHelpHelp = false;
 
 					for (int x = 0; x < 9; x++)
@@ -425,13 +426,14 @@ namespace MyApp
 
 		public static Dictionary<TKey, (Stack<TValue>, int)> SorteerDictionary<TKey, TValue>(Dictionary<TKey, (Stack<TValue>, int)> dictionary)
 		{
+			//Functie om een dictionary te sorteren!
 			return dictionary.ToDictionary(kvp => kvp.Key, kvp => (new Stack<TValue>(kvp.Value.Item1.OrderByDescending(x => x)), kvp.Value.Item2))
 				.OrderBy(x => x.Value.Item2).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 		}
 
 		static bool BevatEenNul(Nummer[,] sudoku)
 		{
-			foreach (Nummer hokje in sudoku)
+			foreach (Nummer hokje in sudoku) //Check of er ergens nog een 0 staat in de Sudoku!
 			{
 				if (hokje.Getalwaarde == 0)
 				{
@@ -457,7 +459,7 @@ namespace MyApp
 
 		static void UpdateDomeinenVoorCel2(Nummer[,] sudoku, Dictionary<int, (Stack<int>, int)> mogelijkhedenLijst, int y, int x, int getalwaarde)
 		{
-			if (!sudoku[y, x].Locked && sudoku[y, x].Getalwaarde == 0) //Laten we proberen domeinen niet te updaten als je al een getal hebt staan! (er stond != 0: verander naar == 0)
+			if (!sudoku[y, x].Locked && sudoku[y, x].Getalwaarde == 0)
 			{
 				int ingevuldGetal = getalwaarde;
 				(Stack<int>, int) value = mogelijkhedenLijst[y * 9 + x];
@@ -466,18 +468,17 @@ namespace MyApp
 				temp.Sort();
 				temp.Reverse();
 
-				// Update the dictionary with the modified domain
+				//Pas de mogelijkhedenlijst weer aan!
 				mogelijkhedenLijst[y * 9 + x] = (new Stack<int>(temp), temp.Count); //Een niewe stack, én een nieu getal!
 																					
 
-				// Sort the dictionary based on the second value in ascending order
+				//En sorteer de lijst!
 				Dictionary<int, (Stack<int>, int)> mogelijkhedenLijsttemp = SorteerDictionary(mogelijkhedenLijst);
 				mogelijkhedenLijst=mogelijkhedenLijsttemp;
 			}
 		}
 
-
-		static void PrintSudoku(Nummer[,] sudoku) //Alleen voor debug printen, van gpt
+		static void PrintSudoku(Nummer[,] sudoku) //Handig om uit te printen!
 		{
 			for (int i = 0; i < 9; i++)
 			{
