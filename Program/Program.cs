@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using System.ComponentModel;
@@ -473,7 +473,7 @@ namespace MyApp
 					{
 						//System.Console.WriteLine($"Aaaai, de stack van {Cursor} is leeg! We gaan een stap terug in de tijd");
 						Sudoku[yCoordinaat, xCoordinaat].Getalwaarde = 0; //Ik pas even de -2 aan naar -1 bij Geschiedenis.Count
-						Geschiedenis.RemoveAt(Geschiedenis.Count() - 1);
+						Geschiedenis.RemoveAt(Geschiedenis.Count - 1);
 						Cursor = Geschiedenis[Geschiedenis.Count - 1].Keys.First();//En zetten de cursor een tikkie achteruit naar waar hij in het vorige geschiedenispunt was
 
 						yCoordinaat = Cursor / 9; //Van Cursor naar coodinaat. Rekentrucje om van een getal tussen 0 en 80 naar de coordinaat in de 2D array te gaan
@@ -486,7 +486,7 @@ namespace MyApp
 						   xCoordinaat = Cursor % 9;
 
 					   }*/
-
+						//Hier gaat nog iets met de sortering mis :D
 						Geschiedenis[Geschiedenis.Count - 1][Cursor].Item1.Pop(); //En pop het bovenste item!
 																				  //ZittenWeInDeAchteruit = true; //We gaan nu terug, dus we zitten in de achteruit!
 																				  //System.Console.WriteLine("Stack is leeg, en nu weer gevuld!");
