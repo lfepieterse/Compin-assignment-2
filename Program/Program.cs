@@ -421,8 +421,8 @@ namespace MyApp
 				List<Dictionary<int, (Stack<int>, int)>> Geschiedenis = new List<Dictionary<int, (Stack<int>, int)>>(); //Lijst van dict met <gridnummer, (stack, aantal in domein)>
 				Dictionary<int, (Stack<int>, int)> OrgineleMogelijkHedenPerCel = MaakMogelijkHedenPerCel3(Sudoku, rijenLijst, kolommenLijst);
 
-				OrgineleMogelijkHedenPerCel = OrgineleMogelijkHedenPerCel.OrderBy(kv => kv.Value.Item2).ToDictionary(kv => kv.Key, kv => kv.Value); //We zetten de domeinen op volgorde
-				Geschiedenis.Add(OrgineleMogelijkHedenPerCel); //We maken een volledige geschiedenis aan!
+				Dictionary<int, (Stack<int>, int)> OrgineleMogelijkHedenPerCeltemp = SorteerDictionary(OrgineleMogelijkHedenPerCel); //We zetten de domeinen op volgorde
+				Geschiedenis.Add(OrgineleMogelijkHedenPerCeltemp); //We maken een volledige geschiedenis aan!
 
 				int Cursor = OrgineleMogelijkHedenPerCel.Keys.First();//We beginnen bij het element met de minste elementen.
 																	  //bool ZittenWeInDeAchteruit = false; //Bool om bij te houden of we terug aan het gaan zijn!
@@ -444,11 +444,14 @@ namespace MyApp
 					int Vorige = Geschiedenis.Count - 1;
 
 					//Dit sorteren wil je helemaal niet doen hier, je wil constant een gesoorteerde lijst toevoegen eigenlijk.
-					Dictionary<int, (Stack<int>, int)> laatsteGeschiedenisItem = Geschiedenis[Vorige]
-						.ToDictionary(
-						kvp => kvp.Key,
-						kvp => (new Stack<int>(kvp.Value.Item1.OrderByDescending(x => x)), kvp.Value.Item2)
-						 );
+					// Dictionary<int, (Stack<int>, int)> laatsteGeschiedenisItem = Geschiedenis[Vorige]
+					// 	.ToDictionary(
+					// 	kvp => kvp.Key,
+					// 	kvp => (new Stack<int>(kvp.Value.Item1.OrderByDescending(x => x)), kvp.Value.Item2)
+					// 	 );
+
+					//Effe mooi gemaakt:
+					Dictionary<int, (Stack<int>, int)> laatsteGeschiedenisItem = SorteerDictionary(Geschiedenis[Vorige]);
 
 					//Je hoeft niet meer te sorteren, dat is al gebeurd!
 					//Dictionary<int, (Stack<int>, int)> laatsteGeschiedenisItem = new Dictionary<int, (Stack<int>, int)>(Geschiedenis[Vorige]);
@@ -486,7 +489,7 @@ namespace MyApp
 						   xCoordinaat = Cursor % 9;
 
 					   }*/
-						//Hier gaat nog iets met de sortering mis :D
+						//Hier gaat nog iets met de sortering mis :D [TODO nadenken over wanneer je iets sorteert!]
 						Geschiedenis[Geschiedenis.Count - 1][Cursor].Item1.Pop(); //En pop het bovenste item!
 																				  //ZittenWeInDeAchteruit = true; //We gaan nu terug, dus we zitten in de achteruit!
 																				  //System.Console.WriteLine("Stack is leeg, en nu weer gevuld!");
@@ -600,8 +603,11 @@ namespace MyApp
 					//Als er maar één ding leeg was, moeten we alle domeinen weer hervullen en een stap terug.
 					if (!IkBenLeegHelpHelp)
 					{
+						Dictionary<int, (Stack<int>, int)> DeGeschiedenisEntry = SorteerDictionary(UpToDateMogelijkHedenPerCel);
 						//System.Console.WriteLine("Ik voeg toe aan de geschiedenis");
-						Geschiedenis.Add(UpToDateMogelijkHedenPerCel); //Voeg toe aan geschiedenis: ons aangepaste domein
+						Geschiedenis.Add(DeGeschiedenisEntry);
+						
+						//Geschiedenis.Add(UpToDateMogelijkHedenPerCel); //Voeg toe aan geschiedenis: ons aangepaste domein
 																	   //Geschiedenis.Last().OrderBy(x => x.Value.Item2); //Order dit laatste geschiedenis item wel op domein grootte
 																	   // Geschiedenis[Geschiedenis.Count - 1] = Geschiedenis[Geschiedenis.Count - 1]
 																	   // 	.OrderBy(x => x.Value.Item2)
@@ -647,6 +653,12 @@ namespace MyApp
 
 			}
 		}
+
+	public static Dictionary<TKey, (Stack<TValue>, int)> SorteerDictionary<TKey, TValue>(Dictionary<TKey, (Stack<TValue>, int)> dictionary)
+{
+    return dictionary.ToDictionary(kvp => kvp.Key, kvp => (new Stack<TValue>(kvp.Value.Item1.OrderByDescending(x => x)), kvp.Value.Item2))
+        .OrderBy(x => x.Value.Item2).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+}
 
 		static bool BevatEenNul(Nummer[,] sudoku)
 		{
