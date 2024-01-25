@@ -28,8 +28,15 @@ namespace MyApp
 		{
 			Console.WriteLine("Hoi, geef eens input in een reeks aan getallen!");
 
-				string lezen = Console.ReadLine(); //Ervan uitgaande dat er input is, met spaties
-				string input = string.Join("", lezen.Split(' ')); //Zet het om naar een leesbare string!
+			string lezen = Console.ReadLine(); //Ervan uitgaande dat er input is, met spaties
+			Console.WriteLine("Alright! Welk algoritme wil je gebruiken? CBT (1), CBT met Forward Checking (2) of dat alles met MCV (3)?");
+			string lezen2 = Console.ReadLine();
+			int Algortimegetal = int.Parse(lezen2);
+			string input = string.Join("", lezen.Split(' ')); //Zet het om naar een leesbare string!
+
+			//We gaan hem 10 keer runnen, om daar in de analyse het gemiddelde van te pakken!
+			for (int i=0;i<10;i++) {
+			
 
 				//Eerst input in de 2D array zetten
 				Nummer[,] Sudoku = new Nummer[9, 9];
@@ -52,11 +59,11 @@ namespace MyApp
 
 					}
 				}
+				KiesAlgoritme(Algortimegetal, Sudoku);
+			}
 
-			Console.WriteLine("Alright! Welk algoritme wil je gebruiken? CBT (1), CBT met Forward Checking (2) of dat alles met MCV (3)?");
-			string lezen2 = Console.ReadLine();
-			int Algortimegetal = int.Parse(lezen2);
-			KiesAlgoritme(Algortimegetal, Sudoku);
+			
+			
 		}
 
 		static void KiesAlgoritme(int nummer, Nummer[,] Sudoku)
